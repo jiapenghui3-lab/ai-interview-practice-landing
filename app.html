@@ -6,12 +6,12 @@
   <meta name="description" content="上传简历，完成一场轻量 AI 模拟面试，并获得基于回答原话的复盘。" />
   <title>开始模拟面试｜AI 模拟面试</title>
   <link rel="icon" type="image/png" href="design-assets/app-icons/brand-eye-image2-v1.png" />
-  <link rel="stylesheet" href="app.css?v=20260806-6" />
+  <link rel="stylesheet" href="app.css?v=20260807-2" />
 </head>
 <body>
   <main class="app-shell" data-stage="home">
     <header class="app-header">
-      <a class="app-brand" href="index.html"><span class="brand-ai">AI</span>模拟面试</a>
+      <a class="app-brand" href="index.html"><img class="brand-eye-image" src="design-assets/app-icons/brand-eye-image2-v1.png" alt="" />AI 模拟面试</a>
       <div class="stage-progress" aria-label="面试流程">
         <span class="is-active" data-progress="prepare"><i>1</i>准备材料</span>
         <b></b><span data-progress="interview"><i>2</i>开始面试</span>
@@ -32,7 +32,7 @@
           <p>一场模拟，三个步骤</p>
           <ol>
             <li><b>01</b><span><strong>准备材料</strong>上传简历，JD 选填</span></li>
-            <li><b>02</b><span><strong>完成面试</strong>连续回答五个问题</span></li>
+            <li><b>02</b><span><strong>完成面试</strong>和 AI 面试官连续语音问答</span></li>
             <li><b>03</b><span><strong>查看复盘</strong>回到原话找到改进点</span></li>
           </ol>
         </aside>
@@ -42,20 +42,20 @@
     <section class="app-stage prepare-stage" id="prepare-stage" aria-labelledby="prepare-title" hidden>
       <header class="prepare-heading">
         <p class="prepare-step">准备材料</p>
-        <h1 id="prepare-title">上传简历和岗位要求</h1>
-        <p>简历必传，岗位要求选传</p>
+        <h1 id="prepare-title">开始一场完整模拟面试</h1>
+        <p>上传这次面试要用的简历和岗位要求</p>
       </header>
       <div class="material-panel">
         <div class="material-row">
         <div class="material-card required" data-upload-card="resume">
-          <div class="material-type resume-type" aria-hidden="true">R</div>
+          <img class="material-icon" src="design-assets/app-icons/resume-image2-v1.png" alt="" />
           <div class="material-copy"><span>必传</span><h2>你的简历</h2><p>支持 PDF、DOC、DOCX，最大 10MB</p></div>
           <label class="upload-action" for="resume-input">上传简历</label>
           <input id="resume-input" type="file" accept=".pdf,.doc,.docx" hidden />
           <div class="file-state" data-file-state="resume" hidden><strong></strong><button type="button" data-remove="resume">重新上传</button></div>
         </div>
         <div class="material-card optional" data-upload-card="jd">
-          <div class="material-type jd-type" aria-hidden="true">JD</div>
+          <img class="material-icon" src="design-assets/app-icons/jd-image2-v1.png" alt="" />
           <div class="material-copy"><span>选传</span><h2>岗位要求</h2><p>没有 JD 也可以开始通用经历面试</p></div>
           <label class="upload-action secondary" for="jd-input">上传 JD</label>
           <input id="jd-input" type="file" accept=".pdf,.doc,.docx,.txt" hidden />
@@ -82,37 +82,35 @@
           <div class="question-meta"><span id="question-progress">正在连接面试官</span><em id="question-kind">真实语音面试</em></div>
           <h1 id="question-title">面试官即将开始提问。</h1>
           <p class="question-hint" id="question-hint">听到问题后直接开口，面试官会根据你的回答继续追问。</p>
-          <div class="voice-state" id="voice-state"><span class="voice-orb" aria-hidden="true"></span><div><b id="voice-state-title">正在建立语音连接</b><p id="voice-transcript">你的回答会在这里实时显示</p></div></div>
-          <label class="answer-box voice-fallback" for="answer-input" hidden><span>你的回答</span><textarea id="answer-input" rows="5"></textarea></label>
+          <div class="voice-state" id="voice-state"><img class="voice-art" src="design-assets/app-icons/waveform-image2-v1.png" alt="" /><div><b id="voice-state-title">正在建立语音连接</b><p id="voice-transcript">你的回答会在这里实时显示</p></div></div>
           <div class="answer-actions">
-            <button type="button" class="mic-button is-listening" id="speech-button" disabled><img class="speech-icon" src="design-assets/app-icons/waveform-image2-v1.png" alt="" />麦克风已开启</button>
-            <button type="button" class="next-button" id="next-question">结束面试并查看复盘 →</button>
+            <div class="mic-status" aria-label="麦克风已开启"><img class="speech-icon" src="design-assets/app-icons/waveform-image2-v1.png" alt="" />麦克风已开启</div>
           </div>
         </aside>
       </div>
     </section>
 
     <section class="app-stage report-stage" id="report-stage" aria-labelledby="report-title" hidden>
-      <header class="report-heading"><div><h1 id="report-title">本次模拟面试复盘</h1><p>产品岗位 · 面试时长 <span id="report-duration">10:00</span> · <b>✓ 已完成</b></p></div><a href="index.html">返回首页</a></header>
+      <header class="report-heading"><div><h1 id="report-title">本次模拟面试复盘</h1><p><span id="report-context">等待生成</span> · 面试时长 <span id="report-duration">00:00</span> · <b>✓ 已完成</b></p></div><a href="index.html">返回首页</a></header>
 
       <div class="report-grid">
-        <section class="overall-score"><span>综合表现</span><strong id="overall-score">78</strong><em id="overall-evidence">证据等级：待生成</em></section>
-        <section class="score-card"><span>表达清晰度</span><strong id="clarity-score">82</strong><p id="clarity-note">核心信息基本完整。</p></section>
-        <section class="score-card"><span>经历匹配度</span><strong id="match-score">76</strong><p id="match-note">经历与岗位有连接。</p></section>
-        <section class="score-card"><span>回答结构</span><strong id="structure-score">74</strong><p id="structure-note">结论可以再提前。</p></section>
+        <section class="overall-score"><span>综合表现</span><strong id="overall-score">--</strong><em id="overall-evidence">证据等级：等待生成</em></section>
+        <section class="score-card"><span>表达清晰度</span><strong id="clarity-score">--</strong><p id="clarity-note">等待复盘生成</p></section>
+        <section class="score-card"><span>经历匹配度</span><strong id="match-score">--</strong><p id="match-note">等待复盘生成</p></section>
+        <section class="score-card"><span>回答结构</span><strong id="structure-score">--</strong><p id="structure-note">等待复盘生成</p></section>
 
         <section class="ability-card"><h2>能力维度</h2><div class="dimension-list" id="dimension-list"><p>正在整理六项能力证据…</p></div></section>
 
         <section class="evidence-card">
-          <div class="card-title"><span>问题 2：选一个你最有代表性的项目，说说你具体负责了什么？</span></div>
+          <div class="card-title"><span>本次面试中的回答证据</span></div>
           <b class="answer-caption">你的回答</b>
-          <blockquote id="evidence-quote">“我在项目里主要负责……”</blockquote>
-          <b class="review-caption">面试官复盘</b><p class="review-copy" id="review-copy">你的回答思路清晰，能够说明自己在项目中的核心职责。建议继续补充具体挑战和结果数据。</p>
+          <blockquote id="evidence-quote">等待复盘生成</blockquote>
+          <b class="review-caption">面试官复盘</b><p class="review-copy" id="review-copy">等待复盘生成</p>
         </section>
 
-        <section class="summary-card good"><b>答得好的</b><p id="good-point">你说明了自己承担的主要任务。</p></section>
-        <section class="summary-card improve"><b>需要补充</b><p id="improve-point">加入结果数字，让贡献更可信。</p></section>
-        <section class="summary-card next"><b>下一轮先练</b><p id="next-focus">先说结论，再补充行动和结果。</p></section>
+        <section class="summary-card good"><b>答得好的</b><p id="good-point">等待复盘生成</p></section>
+        <section class="summary-card improve"><b>需要补充</b><p id="improve-point">等待复盘生成</p></section>
+        <section class="summary-card next"><b>下一轮先练</b><p id="next-focus">等待复盘生成</p></section>
         <button class="primary-action report-restart" id="restart-interview" type="button">再练一次 →</button>
       </div>
     </section>
@@ -131,9 +129,17 @@
       </section>
     </div>
 
-    <div class="generating-layer" id="generating-layer" hidden><img class="generating-image" src="design-assets/app-icons/ai-interviewer-image2-v1.png" alt="" /><p>正在从你的回答里整理复盘</p><span>先找到最影响结果的一处</span></div>
+    <div class="generating-layer" id="generating-layer" aria-live="polite" hidden>
+      <img class="generating-image" id="generating-image" src="design-assets/characters/yellow-coach-action-v1.png" alt="" />
+      <p id="generating-title">正在从你的回答里整理复盘</p>
+      <span id="generating-message">先找到最影响结果的一处</span>
+      <div class="generating-actions" id="review-error-actions" hidden>
+        <button class="modal-primary" id="retry-review" type="button">重试生成复盘</button>
+        <button class="modal-secondary" id="return-to-prepare" type="button">返回材料页</button>
+      </div>
+    </div>
   </main>
   <script src="realtime.js?v=20260806-1"></script>
-  <script src="app.js?v=20260806-7"></script>
+  <script src="app.js?v=20260807-2"></script>
 </body>
 </html>

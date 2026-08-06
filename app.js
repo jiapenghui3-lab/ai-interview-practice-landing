@@ -9,37 +9,28 @@ const inputs = { resume: document.querySelector('#resume-input'), jd: document.q
 const files = { resume: null, jd: null };
 const resumeModal = document.querySelector('#resume-modal');
 const deviceModal = document.querySelector('#device-modal');
-const answerInput = document.querySelector('#answer-input');
 const questionTitle = document.querySelector('#question-title');
 const questionHint = document.querySelector('#question-hint');
 const questionProgress = document.querySelector('#question-progress');
 const questionKind = document.querySelector('#question-kind');
-const nextQuestionButton = document.querySelector('#next-question');
-const speechButton = document.querySelector('#speech-button');
 const cameraPreview = document.querySelector('#camera-preview');
 const cameraFallback = document.querySelector('#camera-fallback');
 const cameraLabel = document.querySelector('#camera-label');
 const generatingLayer = document.querySelector('#generating-layer');
-
-const baseQuestions = [
-  { kind: '开场问题', title: '请先用一分钟介绍一下你自己。', hint: '不用追求完美，先让面试官快速理解你的经历主线。' },
-  { kind: '经历深挖', title: '选一个你最有代表性的项目，说说你具体负责了什么。', hint: '重点说明你的职责，而不是只介绍整个团队做了什么。' },
-  { kind: '真实追问', title: '在刚才这段经历里，哪个决定最能体现你的个人贡献？', hint: '这是根据上一段回答继续追问的一题。' },
-  { kind: '结果验证', title: '你如何判断这件事最终做得好不好？', hint: '可以补充数据、反馈或最后产生的实际变化。' },
-  { kind: '收尾问题', title: '如果重新做一次，你最想改变哪一步？', hint: '展示你的复盘能力，不需要把自己包装得没有缺点。' }
-];
-
-let questionIndex = 0;
-let answers = [];
+const generatingImage = document.querySelector('#generating-image');
+const generatingTitle = document.querySelector('#generating-title');
+const generatingMessage = document.querySelector('#generating-message');
+const reviewErrorActions = document.querySelector('#review-error-actions');
+const retryReviewButton = document.querySelector('#retry-review');
 let stream = null;
 let totalSeconds = 0;
 let answerSeconds = 0;
 let timer = null;
-let recognition = null;
 let realtimeSession = null;
 let realtimeTranscript = [];
-let currentUserText = '';
+let latestCandidateText = '';
 let isFinishing = false;
+let reviewRequestInFlight = false;
 
 function setStage(name) {
   shell.dataset.stage = name;
@@ -120,7 +111,7 @@ async function enableMedia() {
     deviceModal.hidden = true;
     beginInterview();
   } catch (error) {
-    message.textContent = '没有获得设备权限。你仍然可以使用文字回答完成这次体验。';
+    message.textContent = '没有获得摄像头或麦克风权限。请在浏览器地址栏重新允许后再开始面试。';
   }
 }
 
@@ -139,33 +130,12 @@ function startTimer() {
   }, 1000);
 }
 
-function createFollowup(answer) {
-  const keyword = answer.match(/用户研究|产品方案|跨团队协调|用户增长|项目管理|产品设计|内容运营|销售转化|数据分析|技术开发|团队协作|岗位匹配/)?.[0];
-  if (!keyword) return baseQuestions[2].title;
-  return `你刚才提到“${keyword}”，当时你做的哪个决定最关键？`;
-}
-
-function renderQuestion() {
-  const question = { ...baseQuestions[questionIndex] };
-  if (questionIndex === 2) question.title = createFollowup(answers[1] || '');
-  questionProgress.textContent = `问题 ${questionIndex + 1} / ${baseQuestions.length}`;
-  questionKind.textContent = question.kind;
-  questionTitle.textContent = question.title;
-  questionHint.textContent = question.hint;
-  answerInput.value = answers[questionIndex] || '';
-  answerSeconds = 0;
-  nextQuestionButton.textContent = questionIndex === baseQuestions.length - 1 ? '完成面试并查看复盘 →' : '结束本题并继续 →';
-  answerInput.focus();
-}
-
 function beginInterview() {
-  questionIndex = 0;
-  answers = [];
   totalSeconds = 0;
   answerSeconds = 0;
   setStage('interview');
   realtimeTranscript = [];
-  currentUserText = '';
+  latestCandidateText = '';
   isFinishing = false;
   questionProgress.textContent = '正在连接面试官';
   questionKind.textContent = '真实语音面试';
@@ -174,8 +144,6 @@ function beginInterview() {
   startTimer();
   startRealtimeInterview();
 }
-
-nextQuestionButton.addEventListener('click', finishInterview);
 
 function setVoiceState(title, mode = 'listening') {
   const state = document.querySelector('#voice-state');
@@ -194,12 +162,9 @@ async function startRealtimeInterview() {
     onSpeaking() { setVoiceState('面试官正在提问', 'speaking'); },
     onListening() { setVoiceState('面试官正在听你回答'); },
     onTranscript(text, isFinal) {
-      currentUserText = text;
+      latestCandidateText = text.trim();
       transcriptNode.textContent = text;
-      if (isFinal && text.trim()) {
-        realtimeTranscript.push({ role: '候选人', text: text.trim() });
-        answers.push(text.trim());
-      }
+      if (isFinal && text.trim()) realtimeTranscript.push({ role: '候选人', text: text.trim() });
     },
     onInterviewerText(text) {
       questionTitle.textContent = text;
@@ -226,23 +191,58 @@ async function startRealtimeInterview() {
 
 function stopMedia() {
   clearInterval(timer);
-  if (recognition) recognition.stop();
   if (stream) stream.getTracks().forEach((track) => track.stop());
   realtimeSession?.stop();
   realtimeSession = null;
   stream = null;
 }
 
+function resetReviewLayer() {
+  generatingLayer.classList.remove('is-error');
+  generatingImage.src = 'design-assets/characters/yellow-coach-action-v1.png';
+  generatingTitle.textContent = '正在从你的回答里整理复盘';
+  generatingMessage.textContent = '先找到最影响结果的一处';
+  reviewErrorActions.hidden = true;
+}
+
+function showReviewError(error) {
+  const hasTranscript = realtimeTranscript.some((item) => item.role === '候选人' && item.text.trim()) || latestCandidateText;
+  generatingLayer.classList.add('is-error');
+  generatingImage.src = 'design-assets/app-icons/warning-image2-v1.png';
+  generatingTitle.textContent = '复盘暂时没有生成成功';
+  generatingMessage.textContent = hasTranscript
+    ? '你的面试记录仍然保留，可以直接重试生成。'
+    : '这次没有采集到可复盘的回答，请返回材料页后重新开始。';
+  reviewErrorActions.hidden = false;
+  console.error('DeepSeek review failed', error);
+}
+
+async function generateReview() {
+  if (reviewRequestInFlight) return;
+  reviewRequestInFlight = true;
+  retryReviewButton.disabled = true;
+  resetReviewLayer();
+  generatingLayer.hidden = false;
+  try {
+    const review = await requestDeepseekReview();
+    populateReport(review);
+    updateReportMetadata();
+    generatingLayer.hidden = true;
+    setStage('report');
+  } catch (error) {
+    showReviewError(error);
+  } finally {
+    reviewRequestInFlight = false;
+    retryReviewButton.disabled = false;
+    if (!reviewErrorActions.hidden) retryReviewButton.focus();
+  }
+}
+
 async function finishInterview() {
   if (isFinishing) return;
   isFinishing = true;
   stopMedia();
-  generatingLayer.hidden = false;
-  let review = null;
-  try { review = await requestDeepseekReview(); } catch (error) { console.error('DeepSeek review failed', error); }
-  populateReport(review);
-  generatingLayer.hidden = true;
-  setStage('report');
+  await generateReview();
 }
 
 document.querySelector('#quit-interview').addEventListener('click', () => {
@@ -250,21 +250,16 @@ document.querySelector('#quit-interview').addEventListener('click', () => {
   finishInterview();
 });
 
-function scoreAnswers() {
-  const valid = answers.filter(Boolean);
-  const totalLength = valid.reduce((sum, answer) => sum + answer.length, 0);
-  const avg = valid.length ? totalLength / valid.length : 0;
-  const evidenceCount = valid.filter((answer) => /\d|结果|提升|降低|完成|用户|收入|效率/.test(answer)).length;
-  const clarity = Math.max(62, Math.min(92, Math.round(66 + avg / 12)));
-  const structure = Math.max(60, Math.min(90, Math.round(64 + valid.filter((answer) => /首先|然后|最后|因为|所以|负责/.test(answer)).length * 5)));
-  const match = Math.max(61, Math.min(91, Math.round(68 + evidenceCount * 4 + (files.jd ? 5 : 0))));
-  return { clarity, structure, match, overall: Math.round((clarity + structure + match) / 3) };
-}
-
 async function requestDeepseekReview() {
-  const transcript = realtimeTranscript.length
-    ? realtimeTranscript.map((item) => `${item.role}：${item.text}`).join('\n')
-    : baseQuestions.map((question, index) => `面试官：${index === 2 ? createFollowup(answers[1] || '') : question.title}\n候选人：${answers[index] || '未回答'}`).join('\n');
+  const transcriptItems = [...realtimeTranscript];
+  const lastCandidate = transcriptItems.filter((item) => item.role === '候选人').at(-1)?.text || '';
+  if (latestCandidateText && latestCandidateText !== lastCandidate) {
+    transcriptItems.push({ role: '候选人', text: latestCandidateText });
+  }
+  if (!transcriptItems.some((item) => item.role === '候选人' && item.text.trim())) {
+    throw new Error('No candidate transcript available');
+  }
+  const transcript = transcriptItems.map((item) => `${item.role}：${item.text}`).join('\n');
   const response = await fetch('https://ai-interview-voice-gateway.lilu-schedule-qa.workers.dev/review?v=1', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -278,76 +273,90 @@ async function requestDeepseekReview() {
   return response.json();
 }
 
-function populateReport(review = null) {
-  const scores = scoreAnswers();
-  const longest = answers.filter(Boolean).sort((a, b) => b.length - a.length)[0] || '这次还没有留下足够长的回答。';
-  const hasNumber = /\d/.test(longest);
-  const display = review?.display_scores || scores;
-  const overall = review?.overall_score ?? scores.overall;
-  document.querySelector('#overall-score').textContent = overall;
-  document.querySelector('#overall-evidence').textContent = review?.evidence_level ? `证据等级：${review.evidence_level}` : '基于本次回答生成';
-  document.querySelector('#clarity-score').textContent = display.clarity;
-  document.querySelector('#structure-score').textContent = display.structure;
-  document.querySelector('#match-score').textContent = display.match;
-  document.querySelectorAll('.score-card>div i').forEach((bar, index) => {
-    bar.style.setProperty('--score', `${[display.clarity, display.structure, display.match][index]}%`);
-  });
-  const evidence = Array.isArray(review?.evidence_quote) ? review.evidence_quote[0] : null;
-  document.querySelector('#evidence-quote').textContent = `“${(evidence || longest).slice(0, 150)}”`;
-  document.querySelector('#review-copy').textContent = review?.summary || '你的回答已经完成，下一步需要把关键判断补充为可验证的证据。';
-  document.querySelector('#good-point').textContent = review?.strengths?.[0] || (longest.length >= 60 ? '你已经提供了较完整的背景和行动信息。' : '你能够直接回应问题，没有明显回避。');
-  document.querySelector('#improve-point').textContent = review?.gaps?.[0] || (hasNumber ? '数字已经出现，可以再解释这个结果为什么重要。' : '补充一个具体数字或结果，让个人贡献更可信。');
-  document.querySelector('#next-focus').textContent = review?.next_focus || (hasNumber ? '先说结论，再把关键数字和你的行动连起来。' : '每段经历至少补充一个可以验证的结果。');
-  const dimensionList = document.querySelector('#dimension-list');
-  if (review?.dimensions?.length) {
-    const weights = [20, 15, 15, 20, 15, 15];
-    dimensionList.replaceChildren(...review.dimensions.map((item, index) => {
-      const row = document.createElement('div');
-      const normalized = Math.round((Number(item.score) / weights[index]) * 100);
-      const copy = document.createElement('span');
-      const name = document.createElement('b');
-      const level = document.createElement('em');
-      const score = document.createElement('strong');
-      name.textContent = item.name;
-      level.textContent = item.evidence_level;
-      score.textContent = Math.max(0, Math.min(100, normalized));
-      copy.append(name, level);
-      row.append(copy, score);
-      return row;
-    }));
-  } else {
-    dimensionList.innerHTML = '<p>本次回答不足，暂时无法形成完整能力判断。</p>';
+function isValidScore(value) {
+  if (value === null || value === '') return false;
+  const score = Number(value);
+  return Number.isFinite(score) && score >= 0 && score <= 100;
+}
+
+function hasText(value) {
+  return typeof value === 'string' && Boolean(value.trim());
+}
+
+function validateReview(review) {
+  const display = review?.display_scores;
+  const dimensionsAreValid = Array.isArray(review?.dimensions)
+    && review.dimensions.length === 6
+    && review.dimensions.every((item) => hasText(item?.name) && hasText(item?.evidence_level) && isValidScore(item.score));
+  const copyIsValid = hasText(review?.summary)
+    && Array.isArray(review?.strengths) && hasText(review.strengths[0])
+    && Array.isArray(review?.gaps) && hasText(review.gaps[0])
+    && hasText(review?.next_focus);
+  if (!isValidScore(review?.overall_score)
+    || !display
+    || !isValidScore(display.clarity)
+    || !isValidScore(display.match)
+    || !isValidScore(display.structure)
+    || !hasText(review?.evidence_level)
+    || !dimensionsAreValid
+    || !copyIsValid) {
+    throw new Error('Review API returned incomplete data');
   }
 }
 
-const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (Recognition) {
-  recognition = new Recognition();
-  recognition.lang = 'zh-CN';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  let speechBase = '';
-  recognition.onstart = () => {
-    speechBase = answerInput.value;
-    speechButton.classList.add('is-listening');
-    speechButton.lastChild.textContent = ' 正在听…';
-  };
-  recognition.onresult = (event) => {
-    let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i += 1) transcript += event.results[i][0].transcript;
-    answerInput.value = `${speechBase}${speechBase ? ' ' : ''}${transcript}`;
-  };
-  recognition.onend = () => {
-    speechButton.classList.remove('is-listening');
-    speechButton.lastChild.textContent = '语音输入';
-  };
-  speechButton.addEventListener('click', () => {
-    if (speechButton.classList.contains('is-listening')) recognition.stop(); else recognition.start();
-  });
-} else {
-  speechButton.title = '当前浏览器暂不支持语音转写';
-  speechButton.addEventListener('click', () => alert('当前浏览器暂不支持语音转写，请直接输入回答。'));
+function updateReportMetadata() {
+  document.querySelector('#report-title').textContent = files.jd ? '岗位模拟面试复盘' : '通用模拟面试复盘';
+  document.querySelector('#report-context').textContent = files.jd ? '已按岗位要求练习' : '通用岗位练习';
+  document.querySelector('#report-duration').textContent = formatTime(totalSeconds);
 }
+
+function populateReport(review) {
+  validateReview(review);
+  const display = review.display_scores;
+  document.querySelector('#overall-score').textContent = review.overall_score;
+  document.querySelector('#overall-evidence').textContent = `证据等级：${review.evidence_level}`;
+  document.querySelector('#clarity-score').textContent = display.clarity;
+  document.querySelector('#structure-score').textContent = display.structure;
+  document.querySelector('#match-score').textContent = display.match;
+  document.querySelector('#clarity-note').textContent = '基于本次回答原话评估';
+  document.querySelector('#match-note').textContent = files.jd ? '结合本次岗位材料评估' : '按通用岗位能力评估';
+  document.querySelector('#structure-note').textContent = '基于本次回答组织方式评估';
+  const modelEvidence = Array.isArray(review.evidence_quote)
+    ? review.evidence_quote.find((item) => typeof item === 'string' && item.trim())
+    : '';
+  const transcriptEvidence = realtimeTranscript.find((item) => item.role === '候选人' && item.text.trim())?.text || latestCandidateText;
+  document.querySelector('#evidence-quote').textContent = `“${(modelEvidence || transcriptEvidence).slice(0, 150)}”`;
+  document.querySelector('#review-copy').textContent = review.summary;
+  document.querySelector('#good-point').textContent = review.strengths[0];
+  document.querySelector('#improve-point').textContent = review.gaps[0];
+  document.querySelector('#next-focus').textContent = review.next_focus;
+  const dimensionList = document.querySelector('#dimension-list');
+  const weights = [20, 15, 15, 20, 15, 15];
+  dimensionList.replaceChildren(...review.dimensions.map((item, index) => {
+    const row = document.createElement('div');
+    const rawScore = Number(item.score);
+    const normalized = rawScore <= weights[index] ? Math.round((rawScore / weights[index]) * 100) : Math.round(rawScore);
+    const copy = document.createElement('span');
+    const name = document.createElement('b');
+    const level = document.createElement('em');
+    const score = document.createElement('strong');
+    name.textContent = item.name;
+    level.textContent = item.evidence_level;
+    score.textContent = Math.max(0, Math.min(100, normalized));
+    copy.append(name, level);
+    row.append(copy, score);
+    return row;
+  }));
+}
+
+retryReviewButton.addEventListener('click', generateReview);
+
+document.querySelector('#return-to-prepare').addEventListener('click', () => {
+  generatingLayer.hidden = true;
+  isFinishing = false;
+  deviceModal.hidden = true;
+  setStage('prepare');
+});
 
 document.querySelector('#restart-interview').addEventListener('click', () => {
   cameraPreview.srcObject = null;
