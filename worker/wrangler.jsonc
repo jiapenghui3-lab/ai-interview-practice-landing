@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-interview-voice-gateway",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-01",
+  "observability": { "enabled": true },
+  "vars": {
+    "ALLOWED_ORIGIN": "https://jiapenghui3-lab.github.io",
+    "DOUBAO_REALTIME_URL": "https://openspeech.bytedance.com/api/v3/realtime/dialogue",
+    "DOUBAO_RESOURCE_ID": "volc.speech.dialog",
+    "DOUBAO_APP_KEY": "PlgvMymc7f3tQnJ6"
+  }
+}

@@ -195,14 +195,14 @@ function stopMedia() {
   stream = null;
 }
 
-function finishInterview() {
+async function finishInterview() {
   stopMedia();
   generatingLayer.hidden = false;
-  setTimeout(() => {
-    populateReport();
-    generatingLayer.hidden = true;
-    setStage('report');
-  }, 1650);
+  let review = null;
+  try { review = await requestDeepseekReview(); } catch (error) { console.error('DeepSeek review failed', error); }
+  populateReport(review);
+  generatingLayer.hidden = true;
+  setStage('report');
 }
 
 document.querySelector('#quit-interview').addEventListener('click', () => {
@@ -222,21 +222,61 @@ function scoreAnswers() {
   return { clarity, structure, match, overall: Math.round((clarity + structure + match) / 3) };
 }
 
-function populateReport() {
+async function requestDeepseekReview() {
+  const transcript = baseQuestions.map((question, index) => `面试官：${index === 2 ? createFollowup(answers[1] || '') : question.title}\n候选人：${answers[index] || '未回答'}`).join('\n');
+  const response = await fetch('https://ai-interview-voice-gateway.lilu-schedule-qa.workers.dev/review?v=1', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      resume: files.resume ? `已上传简历：${files.resume.name}` : '',
+      jd: files.jd ? `已上传岗位要求：${files.jd.name}` : '',
+      transcript
+    })
+  });
+  if (!response.ok) throw new Error(`Review API ${response.status}`);
+  return response.json();
+}
+
+function populateReport(review = null) {
   const scores = scoreAnswers();
   const longest = answers.filter(Boolean).sort((a, b) => b.length - a.length)[0] || '这次还没有留下足够长的回答。';
   const hasNumber = /\d/.test(longest);
-  document.querySelector('#overall-score').textContent = scores.overall;
-  document.querySelector('#clarity-score').textContent = scores.clarity;
-  document.querySelector('#structure-score').textContent = scores.structure;
-  document.querySelector('#match-score').textContent = scores.match;
+  const display = review?.display_scores || scores;
+  const overall = review?.overall_score ?? scores.overall;
+  document.querySelector('#overall-score').textContent = overall;
+  document.querySelector('#overall-evidence').textContent = review?.evidence_level ? `证据等级：${review.evidence_level}` : '基于本次回答生成';
+  document.querySelector('#clarity-score').textContent = display.clarity;
+  document.querySelector('#structure-score').textContent = display.structure;
+  document.querySelector('#match-score').textContent = display.match;
   document.querySelectorAll('.score-card>div i').forEach((bar, index) => {
-    bar.style.setProperty('--score', `${[scores.clarity, scores.structure, scores.match][index]}%`);
+    bar.style.setProperty('--score', `${[display.clarity, display.structure, display.match][index]}%`);
   });
-  document.querySelector('#evidence-quote').textContent = `“${longest.slice(0, 110)}${longest.length > 110 ? '…' : ''}”`;
-  document.querySelector('#good-point').textContent = longest.length >= 60 ? '你已经提供了较完整的背景和行动信息。' : '你能够直接回应问题，没有明显回避。';
-  document.querySelector('#improve-point').textContent = hasNumber ? '数字已经出现，可以再解释这个结果为什么重要。' : '补充一个具体数字或结果，让个人贡献更可信。';
-  document.querySelector('#next-focus').textContent = hasNumber ? '先说结论，再把关键数字和你的行动连起来。' : '每段经历至少补充一个可以验证的结果。';
+  const evidence = Array.isArray(review?.evidence_quote) ? review.evidence_quote[0] : null;
+  document.querySelector('#evidence-quote').textContent = `“${(evidence || longest).slice(0, 150)}”`;
+  document.querySelector('#review-copy').textContent = review?.summary || '你的回答已经完成，下一步需要把关键判断补充为可验证的证据。';
+  document.querySelector('#good-point').textContent = review?.strengths?.[0] || (longest.length >= 60 ? '你已经提供了较完整的背景和行动信息。' : '你能够直接回应问题，没有明显回避。');
+  document.querySelector('#improve-point').textContent = review?.gaps?.[0] || (hasNumber ? '数字已经出现，可以再解释这个结果为什么重要。' : '补充一个具体数字或结果，让个人贡献更可信。');
+  document.querySelector('#next-focus').textContent = review?.next_focus || (hasNumber ? '先说结论，再把关键数字和你的行动连起来。' : '每段经历至少补充一个可以验证的结果。');
+  const dimensionList = document.querySelector('#dimension-list');
+  if (review?.dimensions?.length) {
+    const weights = [20, 15, 15, 20, 15, 15];
+    dimensionList.replaceChildren(...review.dimensions.map((item, index) => {
+      const row = document.createElement('div');
+      const normalized = Math.round((Number(item.score) / weights[index]) * 100);
+      const copy = document.createElement('span');
+      const name = document.createElement('b');
+      const level = document.createElement('em');
+      const score = document.createElement('strong');
+      name.textContent = item.name;
+      level.textContent = item.evidence_level;
+      score.textContent = Math.max(0, Math.min(100, normalized));
+      copy.append(name, level);
+      row.append(copy, score);
+      return row;
+    }));
+  } else {
+    dimensionList.innerHTML = '<p>本次回答不足，暂时无法形成完整能力判断。</p>';
+  }
 }
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;

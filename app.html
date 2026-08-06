@@ -6,7 +6,7 @@
   <meta name="description" content="上传简历，完成一场轻量 AI 模拟面试，并获得基于回答原话的复盘。" />
   <title>开始模拟面试｜AI 模拟面试</title>
   <link rel="icon" type="image/png" href="design-assets/app-icons/brand-eye-image2-v1.png" />
-  <link rel="stylesheet" href="app.css?v=20260806-5" />
+  <link rel="stylesheet" href="app.css?v=20260806-6" />
 </head>
 <body>
   <main class="app-shell" data-stage="home">
@@ -95,12 +95,12 @@
       <header class="report-heading"><div><h1 id="report-title">本次模拟面试复盘</h1><p>产品岗位 · 面试时长 <span id="report-duration">10:00</span> · <b>✓ 已完成</b></p></div><a href="index.html">返回首页</a></header>
 
       <div class="report-grid">
-        <section class="overall-score"><span>综合表现</span><strong id="overall-score">78</strong><em>超过 62% 的候选人</em></section>
+        <section class="overall-score"><span>综合表现</span><strong id="overall-score">78</strong><em id="overall-evidence">证据等级：待生成</em></section>
         <section class="score-card"><span>表达清晰度</span><strong id="clarity-score">82</strong><p id="clarity-note">核心信息基本完整。</p></section>
         <section class="score-card"><span>经历匹配度</span><strong id="match-score">76</strong><p id="match-note">经历与岗位有连接。</p></section>
         <section class="score-card"><span>回答结构</span><strong id="structure-score">74</strong><p id="structure-note">结论可以再提前。</p></section>
 
-        <section class="ability-card"><h2>能力维度</h2><img src="design-assets/app-ui/report-radar-v1.png" alt="本次模拟面试能力维度图" /></section>
+        <section class="ability-card"><h2>能力维度</h2><div class="dimension-list" id="dimension-list"><p>正在整理六项能力证据…</p></div></section>
 
         <section class="evidence-card">
           <div class="card-title"><span>问题 2：选一个你最有代表性的项目，说说你具体负责了什么？</span></div>
@@ -132,6 +132,6 @@
 
     <div class="generating-layer" id="generating-layer" hidden><img class="generating-image" src="design-assets/app-icons/ai-interviewer-image2-v1.png" alt="" /><p>正在从你的回答里整理复盘</p><span>先找到最影响结果的一处</span></div>
   </main>
-  <script src="app.js?v=20260806-4"></script>
+  <script src="app.js?v=20260806-6"></script>
 </body>
 </html>
