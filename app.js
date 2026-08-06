@@ -107,6 +107,7 @@ async function enableMedia() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     cameraPreview.srcObject = stream;
+    cameraPreview.closest('.camera-panel').classList.add('has-camera');
     cameraFallback.hidden = true;
     cameraLabel.textContent = '摄像头与麦克风已连接';
     deviceModal.hidden = true;
@@ -266,6 +267,7 @@ if (Recognition) {
 
 document.querySelector('#restart-interview').addEventListener('click', () => {
   cameraPreview.srcObject = null;
+  cameraPreview.closest('.camera-panel').classList.remove('has-camera');
   cameraFallback.hidden = false;
   deviceModal.hidden = false;
   setStage('prepare');
