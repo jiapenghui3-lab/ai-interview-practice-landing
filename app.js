@@ -1,5 +1,6 @@
 const shell = document.querySelector('.app-shell');
 const stages = {
+  home: document.querySelector('#home-stage'),
   prepare: document.querySelector('#prepare-stage'),
   interview: document.querySelector('#interview-stage'),
   report: document.querySelector('#report-stage')
@@ -44,10 +45,12 @@ function setStage(name) {
   });
   document.querySelectorAll('[data-progress]').forEach((item) => {
     const order = ['prepare', 'interview', 'report'];
-    item.classList.toggle('is-active', order.indexOf(item.dataset.progress) <= order.indexOf(name));
+    item.classList.toggle('is-active', name !== 'home' && order.indexOf(item.dataset.progress) <= order.indexOf(name));
   });
   scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+document.querySelector('#enter-app').addEventListener('click', () => setStage('prepare'));
 
 function validateFile(file, type) {
   const allowed = type === 'resume' ? /\.(pdf|doc|docx)$/i : /\.(pdf|doc|docx|txt)$/i;

@@ -6,13 +6,12 @@
   <meta name="description" content="上传简历，完成一场轻量 AI 模拟面试，并获得基于回答原话的复盘。" />
   <title>开始模拟面试｜AI 模拟面试</title>
   <link rel="icon" type="image/png" href="design-assets/app-icons/brand-eye-image2-v1.png" />
-  <link rel="preload" as="image" href="design-assets/app-environments/preparation-environment-v1.png" />
-  <link rel="stylesheet" href="app.css?v=20260806-4" />
+  <link rel="stylesheet" href="app.css?v=20260806-5" />
 </head>
 <body>
-  <main class="app-shell" data-stage="prepare">
+  <main class="app-shell" data-stage="home">
     <header class="app-header">
-      <a class="app-brand" href="index.html"><img class="brand-eye-image" src="design-assets/app-icons/brand-eye-image2-v1.png" alt="" />AI 模拟面试</a>
+      <a class="app-brand" href="index.html"><span class="brand-ai">AI</span>模拟面试</a>
       <div class="stage-progress" aria-label="面试流程">
         <span class="is-active" data-progress="prepare"><i>1</i>准备材料</span>
         <b></b><span data-progress="interview"><i>2</i>开始面试</span>
@@ -21,22 +20,42 @@
       <a class="header-exit" href="index.html">返回介绍页 ↗</a>
     </header>
 
-    <section class="app-stage prepare-stage is-active" id="prepare-stage" aria-labelledby="prepare-title">
+    <section class="app-stage home-stage is-active" id="home-stage" aria-labelledby="home-title">
+      <div class="home-workspace">
+        <div class="home-copy">
+          <p class="home-eyebrow">AI 模拟面试</p>
+          <h1 id="home-title">把正式面试，<br />先完整练一遍。</h1>
+          <p>围绕你的真实经历完成一场面试，并在结束后看到具体复盘。</p>
+          <button class="home-primary" id="enter-app" type="button">开始使用 <span>→</span></button>
+        </div>
+        <aside class="home-summary" aria-label="使用流程">
+          <p>一场模拟，三个步骤</p>
+          <ol>
+            <li><b>01</b><span><strong>准备材料</strong>上传简历，JD 选填</span></li>
+            <li><b>02</b><span><strong>完成面试</strong>连续回答五个问题</span></li>
+            <li><b>03</b><span><strong>查看复盘</strong>回到原话找到改进点</span></li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section class="app-stage prepare-stage" id="prepare-stage" aria-labelledby="prepare-title" hidden>
       <header class="prepare-heading">
-        <h1 id="prepare-title">开始一场完整模拟面试</h1>
-        <p>上传这次面试要用的简历和岗位要求</p>
+        <p class="prepare-step">准备材料</p>
+        <h1 id="prepare-title">上传简历和岗位要求</h1>
+        <p>简历必传，岗位要求选传</p>
       </header>
       <div class="material-panel">
         <div class="material-row">
         <div class="material-card required" data-upload-card="resume">
-          <img class="material-icon" src="design-assets/app-icons/resume-image2-v1.png" alt="" />
+          <div class="material-type resume-type" aria-hidden="true">R</div>
           <div class="material-copy"><span>必传</span><h2>你的简历</h2><p>支持 PDF、DOC、DOCX，最大 10MB</p></div>
           <label class="upload-action" for="resume-input">上传简历</label>
           <input id="resume-input" type="file" accept=".pdf,.doc,.docx" hidden />
           <div class="file-state" data-file-state="resume" hidden><strong></strong><button type="button" data-remove="resume">重新上传</button></div>
         </div>
         <div class="material-card optional" data-upload-card="jd">
-          <img class="material-icon" src="design-assets/app-icons/jd-image2-v1.png" alt="" />
+          <div class="material-type jd-type" aria-hidden="true">JD</div>
           <div class="material-copy"><span>选传</span><h2>岗位要求</h2><p>没有 JD 也可以开始通用经历面试</p></div>
           <label class="upload-action secondary" for="jd-input">上传 JD</label>
           <input id="jd-input" type="file" accept=".pdf,.doc,.docx,.txt" hidden />
@@ -113,6 +132,6 @@
 
     <div class="generating-layer" id="generating-layer" hidden><img class="generating-image" src="design-assets/app-icons/ai-interviewer-image2-v1.png" alt="" /><p>正在从你的回答里整理复盘</p><span>先找到最影响结果的一处</span></div>
   </main>
-  <script src="app.js?v=20260806-3"></script>
+  <script src="app.js?v=20260806-4"></script>
 </body>
 </html>
