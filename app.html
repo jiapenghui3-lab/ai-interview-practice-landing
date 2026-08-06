@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="上传简历，完成一场轻量 AI 模拟面试，并获得基于回答原话的复盘。" />
+  <title>开始模拟面试｜AI 模拟面试</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='32' rx='27' ry='19' fill='white' stroke='%2310172e' stroke-width='6'/%3E%3Ccircle cx='34' cy='32' r='9' fill='%233159f5'/%3E%3C/svg%3E" />
+  <link rel="preload" as="image" href="design-assets/app-environments/preparation-environment-v1.png" />
+  <link rel="stylesheet" href="app.css?v=20260806-2" />
+</head>
+<body>
+  <main class="app-shell" data-stage="prepare">
+    <header class="app-header">
+      <a class="app-brand" href="index.html"><span class="brand-eye" aria-hidden="true"></span>AI 模拟面试</a>
+      <div class="stage-progress" aria-label="面试流程">
+        <span class="is-active" data-progress="prepare"><i>1</i>准备材料</span>
+        <b></b><span data-progress="interview"><i>2</i>开始面试</span>
+        <b></b><span data-progress="report"><i>3</i>查看复盘</span>
+      </div>
+      <a class="header-exit" href="index.html">返回介绍页 ↗</a>
+    </header>
+
+    <section class="app-stage prepare-stage is-active" id="prepare-stage" aria-labelledby="prepare-title">
+      <div class="prepare-heading">
+        <p class="stage-kicker">正式开始前，只准备两份材料</p>
+        <h1 id="prepare-title">先让面试官<br>真正了解你。</h1>
+        <p>简历决定这场面试会问什么；上传 JD 后，问题会更贴近目标岗位。</p>
+      </div>
+
+      <div class="material-panel">
+        <div class="material-card required" data-upload-card="resume">
+          <div class="material-icon resume-icon" aria-hidden="true">R</div>
+          <div class="material-copy"><span>必传</span><h2>你的简历</h2><p>支持 PDF、DOC、DOCX，最大 10MB</p></div>
+          <label class="upload-action" for="resume-input">选择文件</label>
+          <input id="resume-input" type="file" accept=".pdf,.doc,.docx" hidden />
+          <div class="file-state" data-file-state="resume" hidden><strong></strong><button type="button" data-remove="resume">重新上传</button></div>
+        </div>
+
+        <div class="material-join" aria-hidden="true"><i></i><span>+</span><i></i></div>
+
+        <div class="material-card optional" data-upload-card="jd">
+          <div class="material-icon jd-icon" aria-hidden="true">JD</div>
+          <div class="material-copy"><span>选传</span><h2>岗位要求</h2><p>没有 JD 也可以开始通用经历面试</p></div>
+          <label class="upload-action secondary" for="jd-input">选择文件</label>
+          <input id="jd-input" type="file" accept=".pdf,.doc,.docx,.txt" hidden />
+          <div class="file-state" data-file-state="jd" hidden><strong></strong><button type="button" data-remove="jd">重新上传</button></div>
+        </div>
+
+        <button class="primary-action" id="start-interview" type="button">开始我的模拟面试 <span>→</span></button>
+        <p class="privacy-note">文件只用于本次体验，不会公开展示。</p>
+      </div>
+    </section>
+
+    <section class="app-stage interview-stage" id="interview-stage" aria-labelledby="question-title" hidden>
+      <div class="interview-topbar">
+        <div><span class="live-dot"></span>模拟面试进行中</div>
+        <strong id="interview-clock">00:00</strong>
+        <button type="button" class="text-button" id="quit-interview">提前结束</button>
+      </div>
+
+      <div class="interview-layout">
+        <section class="camera-panel">
+          <video id="camera-preview" autoplay muted playsinline></video>
+          <div class="camera-fallback" id="camera-fallback"><span class="avatar-eye"></span><p>镜头画面只在本地显示</p></div>
+          <div class="camera-status"><span id="camera-label">摄像头待连接</span><b id="answer-clock">00:00</b></div>
+        </section>
+
+        <aside class="question-panel">
+          <div class="question-meta"><span id="question-progress">问题 1 / 5</span><em id="question-kind">开场问题</em></div>
+          <h1 id="question-title">请先用一分钟介绍一下你自己。</h1>
+          <p class="question-hint" id="question-hint">不用追求完美，像正式面试一样直接开口。</p>
+          <label class="answer-box" for="answer-input">
+            <span>你的回答</span>
+            <textarea id="answer-input" rows="7" placeholder="可以直接输入，也可以点击下方麦克风进行语音转写。"></textarea>
+          </label>
+          <div class="answer-actions">
+            <button type="button" class="mic-button" id="speech-button"><span></span>语音输入</button>
+            <button type="button" class="next-button" id="next-question">结束本题并继续 →</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="app-stage report-stage" id="report-stage" aria-labelledby="report-title" hidden>
+      <header class="report-heading">
+        <div><p class="stage-kicker">本次模拟面试复盘</p><h1 id="report-title">你已经完成了<br>一场完整表达。</h1></div>
+        <div class="overall-score"><span>综合表现</span><strong id="overall-score">78</strong><em>完成</em></div>
+      </header>
+
+      <div class="report-grid">
+        <section class="score-card"><span>表达清晰度</span><strong id="clarity-score">82</strong><div><i style="--score:82%"></i></div><p id="clarity-note">核心信息基本完整。</p></section>
+        <section class="score-card"><span>回答结构</span><strong id="structure-score">74</strong><div><i style="--score:74%"></i></div><p id="structure-note">结论可以再提前。</p></section>
+        <section class="score-card"><span>岗位贴合度</span><strong id="match-score">76</strong><div><i style="--score:76%"></i></div><p id="match-note">经历与岗位有连接。</p></section>
+
+        <section class="evidence-card">
+          <div class="card-title"><span>回到你的原话</span><b>证据复盘</b></div>
+          <blockquote id="evidence-quote">“我在项目里主要负责……”</blockquote>
+          <div class="evidence-points"><p class="good"><b>已经说清楚</b><span id="good-point">你说明了自己承担的主要任务。</span></p><p class="improve"><b>还可以补充</b><span id="improve-point">加入结果数字，让贡献更可信。</span></p></div>
+        </section>
+
+        <section class="next-focus-card">
+          <div class="focus-number">1</div>
+          <p>下一轮只练一个重点</p>
+          <h2 id="next-focus">先说结论，再补充行动和结果。</h2>
+          <button class="primary-action" id="restart-interview" type="button">带着这个重点，再练一场 →</button>
+        </section>
+      </div>
+    </section>
+
+    <div class="modal-backdrop" id="resume-modal" hidden>
+      <section class="app-modal" role="dialog" aria-modal="true" aria-labelledby="resume-modal-title">
+        <div class="modal-mark">!</div><p>还差一份必需材料</p><h2 id="resume-modal-title">请先上传你的简历</h2><span>简历决定这场面试会围绕哪些经历来问。JD 可以稍后再补。</span>
+        <div><button type="button" class="modal-secondary" data-close-modal>暂不上传</button><label class="modal-primary" for="resume-input">去上传简历</label></div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="device-modal" hidden>
+      <section class="app-modal device-modal" role="dialog" aria-modal="true" aria-labelledby="device-modal-title">
+        <div class="modal-mark device">●</div><p>进入面试前</p><h2 id="device-modal-title">确认摄像头和麦克风</h2><span id="device-message">允许浏览器使用设备后，就可以像正式面试一样开始。</span>
+        <div><button type="button" class="modal-secondary" id="continue-without-device">无设备继续体验</button><button type="button" class="modal-primary" id="enable-device">检查并开始</button></div>
+      </section>
+    </div>
+
+    <div class="generating-layer" id="generating-layer" hidden><div class="generating-orb"><i></i><i></i><i></i></div><p>正在从你的回答里整理复盘</p><span>先找到最影响结果的一处</span></div>
+  </main>
+  <script src="app.js?v=20260806-2"></script>
+</body>
+</html>
