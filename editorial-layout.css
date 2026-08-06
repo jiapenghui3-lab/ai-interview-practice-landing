@@ -1,0 +1,304 @@
+/* Layout-only refinement. Content, animation declarations and keyframes stay unchanged. */
+.story {
+  width: min(90%, 1180px);
+  padding: 122px 0 24px;
+}
+
+.story-intro {
+  width: min(760px, 100%);
+  margin-bottom: 76px;
+}
+
+.story-intro h2 {
+  font-size: clamp(43px, 4.7vw, 64px);
+  line-height: 1.09;
+}
+
+.scene {
+  margin-bottom: 112px;
+}
+
+.scene h2 {
+  max-width: 570px;
+  margin-top: 14px;
+  margin-bottom: 18px;
+  font-size: clamp(42px, 4.5vw, 62px);
+  line-height: 1.07;
+}
+
+.scene p {
+  max-width: 520px;
+}
+
+.scene .pain-tag {
+  margin-top: 18px;
+}
+
+/* 01 / 02 / 05 share one stable editorial grid. */
+.scene-opening,
+.scene-match,
+.scene-next {
+  grid-template-columns: minmax(320px, .78fr) minmax(0, 1.22fr);
+  column-gap: 68px;
+}
+
+.scene-opening {
+  min-height: 680px;
+  padding: 58px 58px 52px;
+}
+
+.opening-copy {
+  width: 42%;
+  padding-top: 52px;
+}
+
+.opening-copy h2 {
+  font-size: clamp(48px, 4.8vw, 66px);
+}
+
+.opening-screen {
+  right: -2%;
+  bottom: -1%;
+  width: 62%;
+}
+
+.scene-points {
+  margin-top: 24px;
+}
+
+.scene-match {
+  min-height: 650px;
+  padding: 34px 34px 28px;
+  align-items: center;
+}
+
+.match-copy {
+  padding: 22px 0 22px 22px;
+}
+
+.match-visual {
+  min-height: 570px;
+}
+
+.match-main {
+  left: 1%;
+  top: 24px;
+  width: 74%;
+}
+
+.match-result {
+  right: 0;
+  bottom: 18px;
+  width: 64%;
+}
+
+.material-formula {
+  margin-top: 24px;
+}
+
+/* 03 keeps its existing animation but uses the same content proportions. */
+.scene-followup {
+  min-height: 680px;
+  padding: 66px 58px 58px;
+}
+
+.followup-heading {
+  width: 43%;
+}
+
+.followup-flow {
+  width: 43%;
+  margin-top: 34px;
+}
+
+.followup-screen {
+  right: -3%;
+  bottom: -2%;
+  width: 56%;
+}
+
+/* 04 keeps the report collage, with calmer and more legible proportions. */
+.scene-report {
+  min-height: 720px;
+  padding: 24px 28px 18px;
+}
+
+.report-copy {
+  width: 40%;
+  padding: 42px 0 0 22px;
+}
+
+.report-collage { inset: 18px 0 18px 42%; }
+
+.report-index {
+  margin-top: 24px;
+}
+
+.scene-next {
+  min-height: 610px;
+  padding: 62px 58px;
+}
+
+.next-screen {
+  width: 100%;
+}
+
+.final-cta {
+  margin-top: 82px;
+}
+
+@media (max-width: 1020px) and (min-width: 901px) {
+  .story { width: min(94%, 940px); }
+  .scene-opening,
+  .scene-match,
+  .scene-next { column-gap: 42px; }
+  .scene h2 { font-size: 48px; }
+  .scene-opening { padding-inline: 42px; }
+  .opening-copy { width: 45%; }
+  .opening-screen { width: 60%; }
+  .scene-followup { padding-inline: 42px; }
+}
+
+@media (max-width: 900px) {
+  .story {
+    width: min(90%, 700px);
+    padding-top: 92px;
+  }
+
+  .story-intro {
+    margin-bottom: 58px;
+  }
+
+  .scene {
+    margin-bottom: 82px;
+  }
+
+  .scene-opening,
+  .scene-match,
+  .scene-next {
+    grid-template-columns: 1fr;
+  }
+
+  .scene-opening {
+    padding: 36px 30px 28px;
+  }
+
+  .opening-copy {
+    width: 100%;
+    padding-top: 34px;
+  }
+
+  .opening-screen {
+    right: auto;
+    bottom: auto;
+    width: 108%;
+    margin: 42px -4% -4%;
+  }
+
+  .scene-match {
+    min-height: 0;
+    padding: 24px 8px 10px;
+  }
+
+  .match-copy {
+    padding: 0;
+  }
+
+  .match-visual {
+    min-height: 535px;
+  }
+
+  .scene-followup {
+    min-height: 0;
+    padding: 46px 30px 320px;
+  }
+
+  .followup-heading,
+  .followup-flow {
+    width: 100%;
+  }
+
+  .followup-screen {
+    right: -5%;
+    bottom: -3%;
+    width: 105%;
+  }
+
+  .scene-report {
+    min-height: 1000px;
+    padding: 0 8px;
+  }
+
+  .report-copy {
+    width: 100%;
+    padding: 0;
+  }
+
+  .report-collage {
+    inset: 450px 0 0;
+  }
+
+  .scene-next {
+    min-height: 0;
+    padding: 44px 30px 30px;
+  }
+}
+
+@media (max-width: 520px) {
+  .story {
+    width: calc(100% - 34px);
+    padding-top: 76px;
+  }
+
+  .story-intro h2,
+  .scene h2,
+  .opening-copy h2 {
+    font-size: 38px;
+  }
+
+  .scene {
+    margin-bottom: 70px;
+  }
+
+  .scene-opening {
+    padding: 28px 20px 22px;
+  }
+
+  .scene-match {
+    padding-inline: 0;
+  }
+
+  .match-visual {
+    min-height: 420px;
+  }
+
+  .scene-followup {
+    padding: 38px 20px 260px;
+  }
+
+  .scene-report {
+    min-height: 1180px;
+    padding-inline: 0;
+  }
+
+  .report-collage {
+    inset: 476px 0 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .report-collage figure,
+  .report-overview,
+  .report-evidence,
+  .report-rhythm {
+    left: auto;
+    right: auto;
+    width: 100%;
+    transform: none;
+  }
+
+  .scene-next {
+    padding: 38px 20px 24px;
+  }
+}

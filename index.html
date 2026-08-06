@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="上传简历和岗位要求，完成一场围绕真实经历与目标岗位的 AI 模拟面试。结束后查看得分和具体复盘，再有重点地练下一次。" />
+  <title>AI 模拟面试｜真正上场前，先完整面试一次</title>
+  <link rel="preload" as="image" href="design-assets/toy-family-light-eyeless-v2.png" fetchpriority="high" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='32' rx='27' ry='19' fill='white' stroke='%2310172e' stroke-width='6'/%3E%3Ccircle cx='34' cy='32' r='9' fill='%233159f5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="toy-theme.css?v=20260806-5" />
+  <link rel="stylesheet" href="character-system.css" />
+  <link rel="stylesheet" href="pain-story.css?v=20260806-5" />
+  <link rel="stylesheet" href="five-scene-story.css?v=20260806-3" />
+  <link rel="stylesheet" href="editorial-layout.css?v=20260806-3" />
+</head>
+<body class="toy-theme">
+  <div class="aurora" aria-hidden="true"><i></i><i></i></div>
+  <header class="site-header">
+    <a class="brand" href="#top"><span class="brand-eye" aria-hidden="true"></span> AI 模拟面试</a>
+    <nav aria-label="主要导航">
+      <a href="#complete">完整练一场</a>
+      <a href="#followup">真实追问</a>
+      <a href="#report">具体复盘</a>
+    </nav>
+    <a class="nav-cta" href="#complete">看看怎么练 ↗</a>
+  </header>
+
+  <main>
+    <section class="landing-hero" id="top">
+      <div class="hero-visual-stage" aria-hidden="true">
+        <img class="hero-scene" src="design-assets/toy-family-light-eyeless-v2.png" alt="" fetchpriority="high" decoding="async" />
+        <svg class="hero-gaze" viewBox="0 0 1568 1003" preserveAspectRatio="xMidYMid meet">
+          <circle class="hero-pupil" cx="459" cy="219" r="17"/><circle class="hero-pupil" cx="526" cy="182" r="17"/>
+          <circle class="hero-pupil flower-pupil" cx="1212" cy="247" r="15"/><circle class="hero-pupil flower-pupil" cx="1317" cy="245" r="15"/>
+          <circle class="hero-pupil" cx="408" cy="560" r="22"/><circle class="hero-pupil" cx="475" cy="600" r="22"/>
+          <circle class="hero-pupil" cx="1294" cy="650" r="22"/><circle class="hero-pupil" cx="1273" cy="728" r="22"/>
+          <circle class="hero-pupil" cx="714" cy="824" r="31"/><circle class="hero-pupil" cx="858" cy="822" r="31"/>
+        </svg>
+      </div>
+      <div class="hero-integrated-copy reveal" data-reveal>
+        <p class="eyebrow">第一次正式面试前，先练一次真的</p>
+        <h1><span class="hero-line">真正上场前，</span><em class="hero-line">先完整面试 <span class="hero-count" id="hero-count" aria-live="polite">1</span> 次。</em></h1>
+        <p class="lead">你只要准备简历和岗位要求，提问、追问和复盘都交给我们。</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#complete">先看看怎么练 →</a>
+          <a class="hero-scroll" href="#complete">往下看完整过程 ↓</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="legacy-journey" hidden aria-hidden="true"><template>
+      <span class="journey-anchor" style="--step:0" aria-hidden="true"></span>
+
+      <div class="journey-sticky">
+        <div class="journey-shell">
+          <div class="journey-heading" aria-hidden="true">
+            <span>一场完整模拟面试</span><b data-journey-count>01 / 15</b>
+          </div>
+
+          <article class="journey-slide is-active" data-journey-step data-tone="blue" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-live-camera-interview-v3.png" alt="从开场到结束完整进行的摄像头模拟面试页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">只刷过题，从没完整面过</p>
+              <span class="chapter-number">01</span>
+              <h2>先把整场，<br>走完一次。</h2>
+              <p class="chapter-note">开场、追问、结束，一个不少。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="sun" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-preparation-page-v3.png" alt="上传本次简历和岗位要求后直接进入完整模拟面试的准备页" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">材料传完，还要选版本配题库</p>
+              <span class="chapter-number">02</span>
+              <h2>两份材料，<br>传完就开练。</h2>
+              <p class="chapter-note">不选版本，不配题库。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="violet" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-material-analysis-ready-v1.png" alt="结合简历经历和岗位要求生成专属面试问题的页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">刷了很多题，还是不像这份岗位</p>
+              <span class="chapter-number">03</span>
+              <h2>这一场，<br>只围绕你来问。</h2>
+              <p class="chapter-note">经历和岗位，共同决定问题。</p>
+            </div>
+            <span class="journey-guide guide-monkey gaze-ip" aria-hidden="true">
+              <img src="design-assets/characters/pink-monkey-guide-v1.png" alt="" />
+              <i class="ip-pupil eye-one"></i><i class="ip-pupil eye-two"></i>
+            </span>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="coral" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-camera-first-question-v1.png" alt="开启摄像头和麦克风后回答第一个问题的完整模拟面试页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">自我介绍背熟了，还是像念稿</p>
+              <span class="chapter-number">04</span>
+              <h2>别背答案，<br>先把自己说清。</h2>
+              <p class="chapter-note">第一题，从真实开口开始。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="orange" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-live-followup-state-v4.png" alt="根据上一段回答继续追问的真实模拟面试页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">第一句能背，第二句就乱</p>
+              <span class="chapter-number">05</span>
+              <h2>你的回答，<br>决定下一题。</h2>
+              <p class="chapter-note">追问，沿着刚才的回答发生。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="mint" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-camera-device-check-v1.png" alt="摄像头与麦克风设备确认页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">一开摄像头，脑子就空白</p>
+              <span class="chapter-number">06</span>
+              <h2>镜头前的紧张，<br>也能提前练。</h2>
+              <p class="chapter-note">设备确认好，再把注意力放回回答。</p>
+            </div>
+            <span class="journey-guide guide-monkey gaze-ip" aria-hidden="true">
+              <img src="design-assets/characters/pink-monkey-guide-v1.png" alt="" />
+              <i class="ip-pupil eye-one"></i><i class="ip-pupil eye-two"></i>
+            </span>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="green" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-answer-countdown-v1.png" alt="倒计时结束后直接进入回答的模拟面试页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">总想等一句完美答案再开口</p>
+              <span class="chapter-number">07</span>
+              <h2>练的不是完美，<br>是临场反应。</h2>
+              <p class="chapter-note">倒计时结束，就像真的一样回答。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="blue" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-final-question-endurance-v1.png" alt="连续完成到最后一道问题的完整模拟面试页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">前两题还行，后面就乱了</p>
+              <span class="chapter-number">08</span>
+              <h2>面试耐力，<br>也要提前练。</h2>
+              <p class="chapter-note">连续回答到最后一题。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="sun" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-speech-rhythm-review-v1.png" alt="记录语速停顿和回答时长的复盘页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">越紧张越说越快，自己听不出来</p>
+              <span class="chapter-number">09</span>
+              <h2>你的节奏，<br>也会被复盘。</h2>
+              <p class="chapter-note">语速、停顿和时长，都有记录。</p>
+            </div>
+            <span class="journey-guide guide-monkey gaze-ip" aria-hidden="true">
+              <img src="design-assets/characters/pink-monkey-guide-v1.png" alt="" />
+              <i class="ip-pupil eye-one"></i><i class="ip-pupil eye-two"></i>
+            </span>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="violet" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-review-report-v3.png" alt="展示整场表现能力维度和关键卡点的模拟面试复盘总览" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">面完以后，只剩一句“还行”</p>
+              <span class="chapter-number">10</span>
+              <h2>答得好不好，<br>一页看清。</h2>
+              <p class="chapter-note">整场表现、能力维度和关键卡点。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="coral" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-question-performance-list-v1.png" alt="逐题展示单独表现的模拟面试复盘列表" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">不知道是哪一题拖了后腿</p>
+              <span class="chapter-number">11</span>
+              <h2>先找到，<br>最该重练的那题。</h2>
+              <p class="chapter-note">每一题，都有单独表现。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="orange" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-review-answer-detail-v4.png" alt="将复盘结论对应到学生具体回答原话的页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">知道分数，还是不知道哪里错</p>
+              <span class="chapter-number">12</span>
+              <h2>每个结论，<br>都回到你的原话。</h2>
+              <p class="chapter-note">复盘，不靠一句模糊的评价。</p>
+            </div>
+            <span class="journey-guide guide-monkey gaze-ip" aria-hidden="true">
+              <img src="design-assets/characters/pink-monkey-guide-v1.png" alt="" />
+              <i class="ip-pupil eye-one"></i><i class="ip-pupil eye-two"></i>
+            </span>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="mint" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-review-structure-v1.png" alt="单独分析回答结构并标记重点的复盘页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">越想说完整，越容易说散</p>
+              <span class="chapter-number">13</span>
+              <h2>把经历讲清，<br>也要讲出重点。</h2>
+              <p class="chapter-note">复盘会单独看回答结构。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="green" data-side="right">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-expression-habits-v1.png" alt="从回答原话中标记口头禅和表达习惯的复盘页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">嗯、然后、就是，自己根本没发现</p>
+              <span class="chapter-number">14</span>
+              <h2>口头禅，<br>也藏在原话里。</h2>
+              <p class="chapter-note">不替你重写，只把习惯标出来。</p>
+            </div>
+          </article>
+
+          <article class="journey-slide" data-journey-step data-tone="blue" data-side="left">
+            <figure class="journey-screen">
+              <img src="design-assets/ui-next-practice-plan-v1.png" alt="从本次复盘中指出下一轮优先练习重点的页面" />
+            </figure>
+            <div class="journey-copy">
+              <p class="pain-tag">看完报告，还是不知道先改什么</p>
+              <span class="chapter-number">15</span>
+              <h2>下一轮，<br>只练一个重点。</h2>
+              <p class="chapter-note">先改最影响结果的那一处。</p>
+            </div>
+            <span class="journey-guide guide-monkey gaze-ip" aria-hidden="true">
+              <img src="design-assets/characters/pink-monkey-guide-v1.png" alt="" />
+              <i class="ip-pupil eye-one"></i><i class="ip-pupil eye-two"></i>
+            </span>
+          </article>
+
+          <ol class="journey-dots" aria-label="流程进度">
+            <li class="is-active"><span>走完整场</span></li><li><span>传完就练</span></li>
+            <li><span>专属问题</span></li><li><span>真实开口</span></li>
+            <li><span>连续追问</span></li><li><span>镜头状态</span></li>
+            <li><span>临场反应</span></li><li><span>面试耐力</span></li>
+            <li><span>回答节奏</span></li><li><span>整场复盘</span></li>
+            <li><span>逐题表现</span></li><li><span>原话证据</span></li>
+            <li><span>回答结构</span></li><li><span>表达习惯</span></li>
+            <li><span>下轮重点</span></li>
+          </ol>
+        </div>
+      </div>
+    </template></section>
+
+    <section class="story" aria-label="五个核心模拟面试场景">
+      <header class="story-intro reveal" data-reveal>
+        <p class="eyebrow">不用再猜该练什么</p>
+        <h2>带上简历和岗位要求，完整练完一场面试。</h2>
+        <p>从开口回答，到收到具体复盘，按真实流程先走一遍。</p>
+      </header>
+
+      <aside class="story-guide reveal" data-reveal aria-label="你可能正在担心的问题">
+        <strong class="guide-mark" aria-hidden="true">?</strong>
+        <div class="guide-copy">
+          <span>你最担心的，我们放进完整模拟里解决</span>
+          <a id="type-link" href="#report"><b id="typewriter"></b><i></i></a>
+        </div>
+        <a class="guide-next" href="#complete" aria-label="往下看怎么解决">↓</a>
+      </aside>
+
+      <article class="scene scene-opening" id="complete" data-scene>
+        <div class="scene-kicker"><span>01</span><b>完整面试</b></div>
+        <div class="opening-copy">
+          <p class="pain-tag">别把第一次完整面试留到正式上场</p>
+          <h2>先在这里，<br>完整练完一场。</h2>
+          <p>你不用自己拼题目和流程。像正式面试一样，从开场连续回答到结束。</p>
+          <ul class="scene-points"><li>提前适应镜头与麦克风</li><li>像真的一样连续答到最后</li></ul>
+        </div>
+        <figure class="opening-screen">
+          <img src="design-assets/ui-live-camera-interview-v3.png" alt="从开场到结束的完整模拟面试界面" />
+        </figure>
+      </article>
+
+      <article class="scene scene-match" id="matched" data-scene>
+        <div class="match-copy">
+          <div class="scene-kicker"><span>02</span><b>材料匹配</b></div>
+          <p class="pain-tag">不用自己选题库、猜重点</p>
+          <h2>你只需要准备<br>两份材料。</h2>
+          <p>上传你的简历和岗位要求，就能直接开始。每个问题都会结合你的经历和这份岗位来问。</p>
+          <div class="material-formula" aria-label="你的简历和岗位要求共同生成这次该问你的问题">
+            <span>你的简历</span><i>+</i><span>岗位要求</span><i>→</i><strong>这次该问你的问题</strong>
+          </div>
+        </div>
+        <div class="match-visual">
+          <figure class="match-main"><img loading="lazy" src="design-assets/ui-preparation-page-v3.png" alt="上传简历和岗位要求的准备页" /></figure>
+          <figure class="match-result"><img loading="lazy" src="design-assets/ui-material-analysis-ready-v1.png" alt="根据材料生成专属面试问题的页面" /></figure>
+        </div>
+      </article>
+
+      <article class="scene scene-followup" id="followup" data-scene>
+        <div class="followup-heading">
+          <div class="scene-kicker"><span>03</span><b>真实追问</b></div>
+          <p class="pain-tag">背好的答案，经不起真实追问</p>
+          <h2>每次追问，<br>都接着你的回答来。</h2>
+        </div>
+        <div class="followup-flow">
+          <div class="answer-node"><small>你的回答</small><p>“我在项目里主要负责用户增长。”</p></div>
+          <div class="followup-line" aria-hidden="true"><i></i><span>沿着原话继续</span></div>
+          <div class="question-node"><small>AI 面试官追问</small><p>“你当时具体做了哪个关键决定？”</p></div>
+        </div>
+        <figure class="followup-screen"><img loading="lazy" src="design-assets/ui-live-followup-state-v4.png" alt="根据上一段回答动态追问的面试页面" /></figure>
+      </article>
+
+      <article class="scene scene-report" id="report" data-scene>
+        <div class="report-copy">
+          <div class="scene-kicker"><span>04</span><b>证据复盘</b></div>
+          <p class="pain-tag">别只拿到一个不知道怎么改的分数</p>
+          <h2>你哪里没说清，<br>直接回到原话看。</h2>
+          <p>不用靠感觉复盘。从整场表现进到单题，看清回答结构、语速停顿和表达习惯。</p>
+          <div class="report-index"><span>整场表现</span><span>逐题证据</span><span>回答结构</span><span>表达习惯</span></div>
+        </div>
+        <div class="report-collage">
+          <figure class="report-overview"><img loading="lazy" src="design-assets/ui-review-report-v3.png" alt="整场模拟面试复盘总览" /></figure>
+          <figure class="report-evidence"><img loading="lazy" src="design-assets/ui-review-answer-detail-v4.png" alt="将复盘结论对应到回答原话的页面" /></figure>
+          <figure class="report-rhythm"><img loading="lazy" src="design-assets/ui-speech-rhythm-review-v1.png" alt="回答语速、停顿和时长复盘页面" /></figure>
+        </div>
+      </article>
+
+      <article class="scene scene-next" id="next" data-scene>
+        <div class="next-copy">
+          <div class="scene-kicker"><span>05</span><b>下轮重点</b></div>
+          <p class="pain-tag">不用一次改完所有问题</p>
+          <h2>练完这一场，<br>你会知道先改什么。</h2>
+          <p>我们会先找出最影响面试结果的那一处。你只需要带着这个重点，开始下一场。</p>
+          <a class="button primary" href="#complete">带着这个重点，再练一场 →</a>
+        </div>
+        <figure class="next-screen"><img loading="lazy" src="design-assets/ui-next-practice-plan-v1.png" alt="从本次复盘中给出下一轮练习重点的页面" /></figure>
+      </article>
+    </section>
+
+    <section class="cta final-cta reveal" data-reveal>
+      <p>简历和岗位要求准备好，就可以开始。</p>
+      <h2>别把第一次完整面试，<br>留到真正上场。</h2>
+      <a class="button light" href="#complete">开始我的完整模拟 →</a>
+      <span class="final-coach gaze-ip" aria-hidden="true">
+        <img src="design-assets/characters/yellow-coach-action-v1.png" alt="" />
+        <i class="coach-eye eye-one"><b class="ip-pupil"></b></i>
+        <i class="coach-eye eye-two"><b class="ip-pupil"></b></i>
+      </span>
+    </section>
+  </main>
+
+  <footer class="site-footer"><span>AI 模拟面试</span><a href="#top">回到顶部 ↑</a></footer>
+  <div class="scroll-progress" aria-hidden="true"><i></i></div>
+  <script src="script.js?v=20260806-11"></script>
+</body>
+</html>
