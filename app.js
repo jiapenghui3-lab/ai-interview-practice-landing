@@ -36,6 +36,10 @@ let totalSeconds = 0;
 let answerSeconds = 0;
 let timer = null;
 let recognition = null;
+let realtimeSession = null;
+let realtimeTranscript = [];
+let currentUserText = '';
+let isFinishing = false;
 
 function setStage(name) {
   shell.dataset.stage = name;
@@ -121,12 +125,6 @@ async function enableMedia() {
 }
 
 document.querySelector('#enable-device').addEventListener('click', enableMedia);
-document.querySelector('#continue-without-device').addEventListener('click', () => {
-  deviceModal.hidden = true;
-  cameraLabel.textContent = '文字回答模式';
-  beginInterview();
-});
-
 function formatTime(seconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
@@ -166,36 +164,78 @@ function beginInterview() {
   totalSeconds = 0;
   answerSeconds = 0;
   setStage('interview');
-  renderQuestion();
+  realtimeTranscript = [];
+  currentUserText = '';
+  isFinishing = false;
+  questionProgress.textContent = '正在连接面试官';
+  questionKind.textContent = '真实语音面试';
+  questionTitle.textContent = '面试官即将开始提问。';
+  questionHint.textContent = '听到问题后直接开口，面试官会根据你的回答继续追问。';
   startTimer();
+  startRealtimeInterview();
 }
 
-nextQuestionButton.addEventListener('click', () => {
-  const answer = answerInput.value.trim();
-  if (!answer) {
-    answerInput.focus();
-    answerInput.closest('.answer-box').animate([
-      { transform: 'translateX(0)' }, { transform: 'translateX(-7px)' }, { transform: 'translateX(7px)' }, { transform: 'translateX(0)' }
-    ], { duration: 280 });
-    return;
+nextQuestionButton.addEventListener('click', finishInterview);
+
+function setVoiceState(title, mode = 'listening') {
+  const state = document.querySelector('#voice-state');
+  document.querySelector('#voice-state-title').textContent = title;
+  state.classList.toggle('is-speaking', mode === 'speaking');
+  state.classList.toggle('is-error', mode === 'error');
+}
+
+async function startRealtimeInterview() {
+  const transcriptNode = document.querySelector('#voice-transcript');
+  realtimeSession = new window.RealtimeInterview({
+    onReady() {
+      questionProgress.textContent = '面试进行中';
+      setVoiceState('请听面试官提问', 'speaking');
+    },
+    onSpeaking() { setVoiceState('面试官正在提问', 'speaking'); },
+    onListening() { setVoiceState('面试官正在听你回答'); },
+    onTranscript(text, isFinal) {
+      currentUserText = text;
+      transcriptNode.textContent = text;
+      if (isFinal && text.trim()) {
+        realtimeTranscript.push({ role: '候选人', text: text.trim() });
+        answers.push(text.trim());
+      }
+    },
+    onInterviewerText(text) {
+      questionTitle.textContent = text;
+      realtimeTranscript.push({ role: '面试官', text });
+    },
+    onComplete() { finishInterview(); },
+    onError(error) {
+      console.error(error);
+      setVoiceState('语音连接出现问题，请结束后重试', 'error');
+      questionHint.textContent = error.message || '语音服务暂时不可用';
+    }
+  });
+  try {
+    await realtimeSession.start(stream, {
+      resume: files.resume ? `已上传：${files.resume.name}` : '',
+      jd: files.jd ? `已上传：${files.jd.name}` : ''
+    });
+  } catch (error) {
+    console.error(error);
+    setVoiceState('语音连接失败，请稍后重试', 'error');
+    questionHint.textContent = error.message;
   }
-  answers[questionIndex] = answer;
-  if (questionIndex < baseQuestions.length - 1) {
-    questionIndex += 1;
-    renderQuestion();
-  } else {
-    finishInterview();
-  }
-});
+}
 
 function stopMedia() {
   clearInterval(timer);
   if (recognition) recognition.stop();
   if (stream) stream.getTracks().forEach((track) => track.stop());
+  realtimeSession?.stop();
+  realtimeSession = null;
   stream = null;
 }
 
 async function finishInterview() {
+  if (isFinishing) return;
+  isFinishing = true;
   stopMedia();
   generatingLayer.hidden = false;
   let review = null;
@@ -207,7 +247,6 @@ async function finishInterview() {
 
 document.querySelector('#quit-interview').addEventListener('click', () => {
   if (!confirm('确定提前结束吗？已经回答的内容仍会生成一份简要复盘。')) return;
-  answers[questionIndex] = answerInput.value.trim();
   finishInterview();
 });
 
@@ -223,7 +262,9 @@ function scoreAnswers() {
 }
 
 async function requestDeepseekReview() {
-  const transcript = baseQuestions.map((question, index) => `面试官：${index === 2 ? createFollowup(answers[1] || '') : question.title}\n候选人：${answers[index] || '未回答'}`).join('\n');
+  const transcript = realtimeTranscript.length
+    ? realtimeTranscript.map((item) => `${item.role}：${item.text}`).join('\n')
+    : baseQuestions.map((question, index) => `面试官：${index === 2 ? createFollowup(answers[1] || '') : question.title}\n候选人：${answers[index] || '未回答'}`).join('\n');
   const response = await fetch('https://ai-interview-voice-gateway.lilu-schedule-qa.workers.dev/review?v=1', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -79,13 +79,14 @@
 
         <aside class="question-panel">
           <div class="ai-interviewer-label"><img src="design-assets/app-icons/ai-interviewer-image2-v1.png" alt="" /><b>AI 面试官</b></div>
-          <div class="question-meta"><span id="question-progress">问题 1 / 5</span><em id="question-kind">开场问题</em></div>
-          <h1 id="question-title">请先用一分钟介绍一下你自己。</h1>
-          <p class="question-hint" id="question-hint">不用追求完美，像正式面试一样直接开口。</p>
-          <label class="answer-box" for="answer-input"><span>你的回答</span><textarea id="answer-input" rows="5" placeholder="可以直接输入，也可以点击下方麦克风进行语音转写。"></textarea></label>
+          <div class="question-meta"><span id="question-progress">正在连接面试官</span><em id="question-kind">真实语音面试</em></div>
+          <h1 id="question-title">面试官即将开始提问。</h1>
+          <p class="question-hint" id="question-hint">听到问题后直接开口，面试官会根据你的回答继续追问。</p>
+          <div class="voice-state" id="voice-state"><span class="voice-orb" aria-hidden="true"></span><div><b id="voice-state-title">正在建立语音连接</b><p id="voice-transcript">你的回答会在这里实时显示</p></div></div>
+          <label class="answer-box voice-fallback" for="answer-input" hidden><span>你的回答</span><textarea id="answer-input" rows="5"></textarea></label>
           <div class="answer-actions">
-            <button type="button" class="mic-button" id="speech-button"><img class="speech-icon" src="design-assets/app-icons/waveform-image2-v1.png" alt="" />语音输入</button>
-            <button type="button" class="next-button" id="next-question">结束本题并继续 →</button>
+            <button type="button" class="mic-button is-listening" id="speech-button" disabled><img class="speech-icon" src="design-assets/app-icons/waveform-image2-v1.png" alt="" />麦克风已开启</button>
+            <button type="button" class="next-button" id="next-question">结束面试并查看复盘 →</button>
           </div>
         </aside>
       </div>
@@ -126,12 +127,13 @@
     <div class="modal-backdrop" id="device-modal" hidden>
       <section class="app-modal device-modal" role="dialog" aria-modal="true" aria-labelledby="device-modal-title">
         <div class="modal-mark device"><img src="design-assets/app-icons/ai-interviewer-image2-v1.png" alt="" /></div><p>进入面试前</p><h2 id="device-modal-title">确认摄像头和麦克风</h2><span id="device-message">允许浏览器使用设备后，就可以像正式面试一样开始。</span>
-        <div><button type="button" class="modal-secondary" id="continue-without-device">无设备继续体验</button><button type="button" class="modal-primary" id="enable-device">检查并开始</button></div>
+        <div class="device-actions"><button type="button" class="modal-primary" id="enable-device">检查并开始</button></div>
       </section>
     </div>
 
     <div class="generating-layer" id="generating-layer" hidden><img class="generating-image" src="design-assets/app-icons/ai-interviewer-image2-v1.png" alt="" /><p>正在从你的回答里整理复盘</p><span>先找到最影响结果的一处</span></div>
   </main>
-  <script src="app.js?v=20260806-6"></script>
+  <script src="realtime.js?v=20260806-1"></script>
+  <script src="app.js?v=20260806-7"></script>
 </body>
 </html>

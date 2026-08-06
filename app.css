@@ -63,6 +63,14 @@ body{background:#f3f5f8}
 .primary-action,.next-button{background:var(--blue);box-shadow:none}
 .primary-action:hover{box-shadow:none}
 
+.voice-state{min-height:245px;margin-top:28px;padding:28px;display:grid;grid-template-columns:74px 1fr;align-items:center;gap:22px;border:1px solid #dfe4ee;border-radius:18px;background:#f8faff}
+.voice-orb{width:70px;height:70px;border-radius:50%;background:radial-gradient(circle at 42% 38%,#fff 0 9%,#7f91ff 10% 24%,#3159f5 25% 56%,#6548f5 57%);box-shadow:0 0 0 12px rgba(49,89,245,.08);animation:voice-breathe 1.6s ease-in-out infinite}
+.voice-state b{font-size:17px}.voice-state p{max-height:120px;margin:12px 0 0;overflow:auto;color:#68738d;font-size:14px;line-height:1.75}
+.voice-state.is-speaking .voice-orb{background:radial-gradient(circle at 42% 38%,#fff 0 9%,#ffd85b 10% 24%,#ff713d 25% 56%,#ffca33 57%);box-shadow:0 0 0 12px rgba(255,113,61,.09)}
+.voice-state.is-error{border-color:#ffc9b5;background:#fff7f3}.voice-state.is-error .voice-orb{animation:none;background:var(--orange)}
+.voice-fallback{display:none!important}.mic-button:disabled{cursor:default;opacity:1}.device-actions{grid-template-columns:1fr!important}.device-actions .modal-primary{width:100%}
+@keyframes voice-breathe{50%{transform:scale(1.08);box-shadow:0 0 0 19px rgba(49,89,245,.05)}}
+
 .home-stage{width:min(1180px,calc(100% - 64px));min-height:calc(100svh - 68px);padding:54px 0;display:grid;place-items:center}
 .home-workspace{width:100%;min-height:610px;display:grid;grid-template-columns:1.12fr .88fr;border:1px solid #dfe3ea;border-radius:18px;background:#fff;overflow:hidden}
 .home-copy{padding:92px 76px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
