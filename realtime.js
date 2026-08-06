@@ -106,7 +106,7 @@
       await connectionReady;
       const materials = `候选人简历：${context.resume || '已上传，请从候选人口述中核验'}\n岗位要求：${context.jd || '未提供，按通用岗位胜任力提问'}`;
       const session = {
-        asr: { extra: { end_smooth_window_ms: 900 } },
+        asr: { extra: { end_smooth_window_ms: 2000 } },
         tts: { speaker: 'zh_male_yunzhou_jupiter_bigtts', audio_config: { channel: 1, format: 'pcm_s16le', sample_rate: 24000 } },
         dialog: {
           bot_name: 'AI面试官',
