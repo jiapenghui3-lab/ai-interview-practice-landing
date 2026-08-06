@@ -4,10 +4,31 @@
   "main": "src/index.js",
   "compatibility_date": "2026-08-01",
   "observability": { "enabled": true },
+  "ratelimits": [
+    {
+      "name": "VOICE_RATE_LIMITER",
+      "namespace_id": "2026080701",
+      "simple": { "limit": 4, "period": 60 }
+    },
+    {
+      "name": "REVIEW_RATE_LIMITER",
+      "namespace_id": "2026080702",
+      "simple": { "limit": 4, "period": 60 }
+    },
+    {
+      "name": "VOICE_GLOBAL_RATE_LIMITER",
+      "namespace_id": "2026080703",
+      "simple": { "limit": 2, "period": 60 }
+    },
+    {
+      "name": "REVIEW_GLOBAL_RATE_LIMITER",
+      "namespace_id": "2026080704",
+      "simple": { "limit": 4, "period": 60 }
+    }
+  ],
   "vars": {
     "ALLOWED_ORIGIN": "https://jiapenghui3-lab.github.io",
     "DOUBAO_REALTIME_URL": "https://openspeech.bytedance.com/api/v3/realtime/dialogue",
-    "DOUBAO_RESOURCE_ID": "volc.speech.dialog",
-    "DOUBAO_APP_KEY": "PlgvMymc7f3tQnJ6"
+    "DOUBAO_RESOURCE_ID": "volc.speech.dialog"
   }
 }

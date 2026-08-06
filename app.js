@@ -7,6 +7,12 @@ const stages = {
 };
 const inputs = { resume: document.querySelector('#resume-input'), jd: document.querySelector('#jd-input') };
 const files = { resume: null, jd: null };
+const parsedMaterials = {
+  resume: { filename: '', text: '', status: 'empty', error: '' },
+  jd: { filename: '', text: '', status: 'empty', error: '' }
+};
+const parseSequence = { resume: 0, jd: 0 };
+const parseControllers = { resume: null, jd: null };
 const resumeModal = document.querySelector('#resume-modal');
 const deviceModal = document.querySelector('#device-modal');
 const questionTitle = document.querySelector('#question-title');
@@ -22,6 +28,8 @@ const generatingTitle = document.querySelector('#generating-title');
 const generatingMessage = document.querySelector('#generating-message');
 const reviewErrorActions = document.querySelector('#review-error-actions');
 const retryReviewButton = document.querySelector('#retry-review');
+const startInterviewButton = document.querySelector('#start-interview');
+const enableDeviceButton = document.querySelector('#enable-device');
 let stream = null;
 let totalSeconds = 0;
 let answerSeconds = 0;
@@ -31,6 +39,17 @@ let realtimeTranscript = [];
 let latestCandidateText = '';
 let isFinishing = false;
 let reviewRequestInFlight = false;
+let fileParserPromise = null;
+
+function createSingleFlight(task) {
+  let activePromise = null;
+  return (...args) => {
+    if (activePromise) return activePromise;
+    activePromise = Promise.resolve().then(() => task(...args));
+    activePromise = activePromise.finally(() => { activePromise = null; });
+    return activePromise;
+  };
+}
 
 function setStage(name) {
   shell.dataset.stage = name;
@@ -47,61 +66,140 @@ function setStage(name) {
 
 document.querySelector('#enter-app').addEventListener('click', () => setStage('prepare'));
 
-function validateFile(file, type) {
-  const allowed = type === 'resume' ? /\.(pdf|doc|docx)$/i : /\.(pdf|doc|docx|txt)$/i;
-  if (!allowed.test(file.name)) return '暂不支持这种文件格式';
-  if (file.size > 10 * 1024 * 1024) return '文件不能超过 10MB';
-  return '';
+function loadFileParser() {
+  if (window.InterviewFileParser) return Promise.resolve(window.InterviewFileParser);
+  if (fileParserPromise) return fileParserPromise;
+  fileParserPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = './file-parser.js?v=20260807-1';
+    script.async = true;
+    script.dataset.fileParser = 'true';
+    script.addEventListener('load', () => {
+      if (window.InterviewFileParser) resolve(window.InterviewFileParser);
+      else reject(new Error('材料读取组件加载失败，请刷新页面后重试。'));
+    }, { once: true });
+    script.addEventListener('error', () => reject(new Error('材料读取组件加载失败，请刷新页面后重试。')), { once: true });
+    document.head.append(script);
+  }).catch((error) => {
+    fileParserPromise = null;
+    throw error;
+  });
+  return fileParserPromise;
+}
+
+function hasParsedJd() {
+  return parsedMaterials.jd.status === 'ready' && Boolean(parsedMaterials.jd.text);
+}
+
+function syncStartState() {
+  const isParsing = Object.values(parsedMaterials).some((material) => material.status === 'parsing');
+  const resumeFailed = parsedMaterials.resume.status === 'error';
+  startInterviewButton.disabled = isParsing || resumeFailed;
+  startInterviewButton.setAttribute('aria-busy', String(isParsing));
+  startInterviewButton.title = isParsing
+    ? '正在读取材料，请稍候'
+    : resumeFailed ? '请重新上传可读取的简历' : '';
 }
 
 function updateFileCard(type) {
   const card = document.querySelector(`[data-upload-card="${type}"]`);
   const state = document.querySelector(`[data-file-state="${type}"]`);
   const action = card.querySelector('.upload-action');
+  const stateCopy = state.querySelector('strong');
+  const removeButton = state.querySelector('[data-remove]');
+  const material = parsedMaterials[type];
   card.classList.toggle('has-file', Boolean(files[type]));
   state.hidden = !files[type];
   action.hidden = Boolean(files[type]);
-  if (files[type]) state.querySelector('strong').textContent = `✓ ${files[type].name}`;
+  card.dataset.fileStatus = material.status;
+  state.setAttribute('aria-live', 'polite');
+  if (files[type]) {
+    if (material.status === 'parsing') stateCopy.textContent = `正在读取：${material.filename}`;
+    if (material.status === 'ready') stateCopy.textContent = `✓ 已读取：${material.filename}`;
+    if (material.status === 'error') stateCopy.textContent = `读取失败：${material.error}`;
+    state.title = material.status === 'error' ? material.error : material.filename;
+    removeButton.textContent = material.status === 'parsing' ? '取消读取' : '重新上传';
+  } else {
+    stateCopy.textContent = '';
+    state.title = '';
+  }
+  syncStartState();
+}
+
+async function parseSelectedFile(type, file) {
+  parseControllers[type]?.abort();
+  const controller = new AbortController();
+  parseControllers[type] = controller;
+  const sequence = ++parseSequence[type];
+  files[type] = file;
+  parsedMaterials[type] = { filename: file.name, text: '', status: 'parsing', error: '' };
+  updateFileCard(type);
+  if (type === 'resume') resumeModal.hidden = true;
+
+  try {
+    const parser = await loadFileParser();
+    const result = await parser.parseMaterialFile(file, {
+      allowText: type === 'jd',
+      signal: controller.signal
+    });
+    if (sequence !== parseSequence[type] || files[type] !== file) return;
+    parsedMaterials[type] = {
+      filename: result.filename,
+      text: result.text,
+      status: 'ready',
+      error: ''
+    };
+  } catch (error) {
+    if (sequence !== parseSequence[type] || files[type] !== file) return;
+    parsedMaterials[type] = {
+      filename: file.name,
+      text: '',
+      status: 'error',
+      error: error.message || '文件读取失败，请重新上传。'
+    };
+  }
+  if (parseControllers[type] === controller) parseControllers[type] = null;
+  updateFileCard(type);
 }
 
 Object.entries(inputs).forEach(([type, input]) => {
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     if (!file) return;
-    const error = validateFile(file, type);
-    if (error) {
-      alert(error);
-      input.value = '';
-      return;
-    }
-    files[type] = file;
-    updateFileCard(type);
-    if (type === 'resume') resumeModal.hidden = true;
+    parseSelectedFile(type, file);
   });
 });
 
 document.querySelectorAll('[data-remove]').forEach((button) => {
   button.addEventListener('click', () => {
     const type = button.dataset.remove;
+    parseControllers[type]?.abort();
+    parseControllers[type] = null;
+    parseSequence[type] += 1;
     files[type] = null;
+    parsedMaterials[type] = { filename: '', text: '', status: 'empty', error: '' };
     inputs[type].value = '';
     updateFileCard(type);
   });
 });
 
-document.querySelector('#start-interview').addEventListener('click', () => {
+startInterviewButton.addEventListener('click', () => {
   if (!files.resume) {
     resumeModal.hidden = false;
     return;
   }
+  if (parsedMaterials.resume.status !== 'ready') return;
   deviceModal.hidden = false;
 });
 
 document.querySelectorAll('[data-close-modal]').forEach((button) => button.addEventListener('click', () => { resumeModal.hidden = true; }));
 resumeModal.addEventListener('click', (event) => { if (event.target === resumeModal) resumeModal.hidden = true; });
 
-async function enableMedia() {
+const enableMedia = createSingleFlight(async () => {
+  if (stream || realtimeSession) return;
   const message = document.querySelector('#device-message');
+  enableDeviceButton.disabled = true;
+  enableDeviceButton.setAttribute('aria-busy', 'true');
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     cameraPreview.srcObject = stream;
@@ -112,10 +210,13 @@ async function enableMedia() {
     beginInterview();
   } catch (error) {
     message.textContent = '没有获得摄像头或麦克风权限。请在浏览器地址栏重新允许后再开始面试。';
+  } finally {
+    enableDeviceButton.disabled = false;
+    enableDeviceButton.removeAttribute('aria-busy');
   }
-}
+});
 
-document.querySelector('#enable-device').addEventListener('click', enableMedia);
+enableDeviceButton.addEventListener('click', enableMedia);
 function formatTime(seconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
@@ -152,6 +253,23 @@ function setVoiceState(title, mode = 'listening') {
   state.classList.toggle('is-error', mode === 'error');
 }
 
+function handleRealtimeError(error) {
+  console.error(error);
+  const hasCandidateAnswer = realtimeTranscript.some((item) => (
+    item.role === '候选人' && typeof item.text === 'string' && item.text.trim()
+  )) || Boolean(latestCandidateText.trim());
+
+  if (hasCandidateAnswer) {
+    setVoiceState('语音连接已结束，正在生成复盘', 'error');
+    questionHint.textContent = '已保留你的回答，正在生成复盘。';
+    finishInterview();
+    return;
+  }
+
+  setVoiceState('语音连接出现问题，请结束后重试', 'error');
+  questionHint.textContent = error.message || '语音服务暂时不可用';
+}
+
 async function startRealtimeInterview() {
   const transcriptNode = document.querySelector('#voice-transcript');
   realtimeSession = new window.RealtimeInterview({
@@ -171,16 +289,12 @@ async function startRealtimeInterview() {
       realtimeTranscript.push({ role: '面试官', text });
     },
     onComplete() { finishInterview(); },
-    onError(error) {
-      console.error(error);
-      setVoiceState('语音连接出现问题，请结束后重试', 'error');
-      questionHint.textContent = error.message || '语音服务暂时不可用';
-    }
+    onError: handleRealtimeError
   });
   try {
     await realtimeSession.start(stream, {
-      resume: files.resume ? `已上传：${files.resume.name}` : '',
-      jd: files.jd ? `已上传：${files.jd.name}` : ''
+      resume: parsedMaterials.resume.text,
+      jd: hasParsedJd() ? parsedMaterials.jd.text : ''
     });
   } catch (error) {
     console.error(error);
@@ -264,8 +378,8 @@ async function requestDeepseekReview() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      resume: files.resume ? `已上传简历：${files.resume.name}` : '',
-      jd: files.jd ? `已上传岗位要求：${files.jd.name}` : '',
+      resume: parsedMaterials.resume.text,
+      jd: hasParsedJd() ? parsedMaterials.jd.text : '',
       transcript
     })
   });
@@ -305,8 +419,8 @@ function validateReview(review) {
 }
 
 function updateReportMetadata() {
-  document.querySelector('#report-title').textContent = files.jd ? '岗位模拟面试复盘' : '通用模拟面试复盘';
-  document.querySelector('#report-context').textContent = files.jd ? '已按岗位要求练习' : '通用岗位练习';
+  document.querySelector('#report-title').textContent = hasParsedJd() ? '岗位模拟面试复盘' : '通用模拟面试复盘';
+  document.querySelector('#report-context').textContent = hasParsedJd() ? '已按岗位要求练习' : '通用岗位练习';
   document.querySelector('#report-duration').textContent = formatTime(totalSeconds);
 }
 
@@ -319,7 +433,7 @@ function populateReport(review) {
   document.querySelector('#structure-score').textContent = display.structure;
   document.querySelector('#match-score').textContent = display.match;
   document.querySelector('#clarity-note').textContent = '基于本次回答原话评估';
-  document.querySelector('#match-note').textContent = files.jd ? '结合本次岗位材料评估' : '按通用岗位能力评估';
+  document.querySelector('#match-note').textContent = hasParsedJd() ? '结合本次岗位材料评估' : '按通用岗位能力评估';
   document.querySelector('#structure-note').textContent = '基于本次回答组织方式评估';
   const modelEvidence = Array.isArray(review.evidence_quote)
     ? review.evidence_quote.find((item) => typeof item === 'string' && item.trim())

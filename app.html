@@ -2,11 +2,18 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="上传简历，完成一场轻量 AI 模拟面试，并获得基于回答原话的复盘。" />
+  <meta name="theme-color" content="#fffdf8" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="模拟面试" />
   <title>开始模拟面试｜AI 模拟面试</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="design-assets/pwa/apple-touch-icon-180.png" />
   <link rel="icon" type="image/png" href="design-assets/app-icons/brand-eye-image2-v1.png" />
-  <link rel="stylesheet" href="app.css?v=20260807-2" />
+  <link rel="stylesheet" href="app.css?v=20260807-3" />
 </head>
 <body>
   <main class="app-shell" data-stage="home">
@@ -49,16 +56,16 @@
         <div class="material-row">
         <div class="material-card required" data-upload-card="resume">
           <img class="material-icon" src="design-assets/app-icons/resume-image2-v1.png" alt="" />
-          <div class="material-copy"><span>必传</span><h2>你的简历</h2><p>支持 PDF、DOC、DOCX，最大 10MB</p></div>
+          <div class="material-copy"><span>必传</span><h2>你的简历</h2><p>支持 PDF、DOCX，最大 10MB</p></div>
           <label class="upload-action" for="resume-input">上传简历</label>
-          <input id="resume-input" type="file" accept=".pdf,.doc,.docx" hidden />
+          <input id="resume-input" type="file" accept=".pdf,.docx" hidden />
           <div class="file-state" data-file-state="resume" hidden><strong></strong><button type="button" data-remove="resume">重新上传</button></div>
         </div>
         <div class="material-card optional" data-upload-card="jd">
           <img class="material-icon" src="design-assets/app-icons/jd-image2-v1.png" alt="" />
           <div class="material-copy"><span>选传</span><h2>岗位要求</h2><p>没有 JD 也可以开始通用经历面试</p></div>
           <label class="upload-action secondary" for="jd-input">上传 JD</label>
-          <input id="jd-input" type="file" accept=".pdf,.doc,.docx,.txt" hidden />
+          <input id="jd-input" type="file" accept=".pdf,.docx,.txt" hidden />
           <div class="file-state" data-file-state="jd" hidden><strong></strong><button type="button" data-remove="jd">重新上传</button></div>
         </div>
         </div>
@@ -139,7 +146,16 @@
       </div>
     </div>
   </main>
-  <script src="realtime.js?v=20260807-1"></script>
-  <script src="app.js?v=20260807-2"></script>
+  <script src="realtime.js?v=20260807-2"></script>
+  <script src="app.js?v=20260807-3"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch((error) => {
+          console.warn('Service worker registration failed', error);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
