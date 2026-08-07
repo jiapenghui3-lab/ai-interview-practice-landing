@@ -30,7 +30,24 @@ const reviewErrorActions = document.querySelector('#review-error-actions');
 const retryReviewButton = document.querySelector('#retry-review');
 const startInterviewButton = document.querySelector('#start-interview');
 const enableDeviceButton = document.querySelector('#enable-device');
+const closeDeviceButton = document.querySelector('#close-device-modal');
+const devicePreview = document.querySelector('#device-camera-preview');
+const devicePreviewFrame = document.querySelector('#device-preview-frame');
+const devicePreviewPlaceholder = document.querySelector('#device-preview-placeholder');
+const deviceMessage = document.querySelector('#device-message');
+const deviceCameraRow = document.querySelector('#device-camera-row');
+const deviceMicrophoneRow = document.querySelector('#device-microphone-row');
+const deviceCameraStatus = document.querySelector('#device-camera-status');
+const deviceMicrophoneStatus = document.querySelector('#device-microphone-status');
+const deviceVolumeMeter = document.querySelector('#device-volume-meter');
+const deviceVolumeLevel = document.querySelector('#device-volume-level');
 let stream = null;
+let deviceCheckState = 'idle';
+let deviceCheckGeneration = 0;
+let deviceAudioContext = null;
+let deviceAudioSource = null;
+let deviceAnalyser = null;
+let deviceVolumeFrame = null;
 let totalSeconds = 0;
 let answerSeconds = 0;
 let timer = null;
@@ -43,12 +60,17 @@ let fileParserPromise = null;
 
 function createSingleFlight(task) {
   let activePromise = null;
-  return (...args) => {
+  const run = (...args) => {
     if (activePromise) return activePromise;
-    activePromise = Promise.resolve().then(() => task(...args));
-    activePromise = activePromise.finally(() => { activePromise = null; });
+    const taskPromise = Promise.resolve().then(() => task(...args));
+    const guardedPromise = taskPromise.finally(() => {
+      if (activePromise === guardedPromise) activePromise = null;
+    });
+    activePromise = guardedPromise;
     return activePromise;
   };
+  run.reset = () => { activePromise = null; };
+  return run;
 }
 
 function setStage(name) {
@@ -127,6 +149,8 @@ function updateFileCard(type) {
 }
 
 async function parseSelectedFile(type, file) {
+  resetDeviceCheck({ hideModal: true });
+  clearInterviewPreview();
   parseControllers[type]?.abort();
   const controller = new AbortController();
   parseControllers[type] = controller;
@@ -173,6 +197,8 @@ Object.entries(inputs).forEach(([type, input]) => {
 document.querySelectorAll('[data-remove]').forEach((button) => {
   button.addEventListener('click', () => {
     const type = button.dataset.remove;
+    resetDeviceCheck({ hideModal: true });
+    clearInterviewPreview();
     parseControllers[type]?.abort();
     parseControllers[type] = null;
     parseSequence[type] += 1;
@@ -189,34 +215,319 @@ startInterviewButton.addEventListener('click', () => {
     return;
   }
   if (parsedMaterials.resume.status !== 'ready') return;
-  deviceModal.hidden = false;
+  openDeviceCheck();
 });
 
 document.querySelectorAll('[data-close-modal]').forEach((button) => button.addEventListener('click', () => { resumeModal.hidden = true; }));
 resumeModal.addEventListener('click', (event) => { if (event.target === resumeModal) resumeModal.hidden = true; });
 
-const enableMedia = createSingleFlight(async () => {
-  if (stream || realtimeSession) return;
-  const message = document.querySelector('#device-message');
+function setDeviceRowState(kind, state, message) {
+  const row = kind === 'video' ? deviceCameraRow : deviceMicrophoneRow;
+  const copy = kind === 'video' ? deviceCameraStatus : deviceMicrophoneStatus;
+  row.dataset.state = state;
+  copy.textContent = message;
+}
+
+function inspectMediaTrack(mediaStream, kind) {
+  const label = kind === 'video' ? '摄像头' : '麦克风';
+  const getter = kind === 'video' ? 'getVideoTracks' : 'getAudioTracks';
+  const tracks = typeof mediaStream?.[getter] === 'function' ? mediaStream[getter]() : [];
+  const track = tracks[0];
+  if (!track) return { ok: false, message: `未检测到${label}设备` };
+  if (!track.enabled) return { ok: false, message: `${label}轨道已被停用` };
+  if (track.readyState !== 'live') return { ok: false, message: `${label}尚未处于可用状态` };
+  return { ok: true, track, message: `${label}已连接` };
+}
+
+function getDeviceFailureCopy(error) {
+  const permissions = '请在 Android 系统的应用权限，或浏览器的网站权限中重新允许摄像头和麦克风。';
+  if (error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError') {
+    return { summary: `没有获得设备权限。${permissions}`, video: '摄像头权限未允许', audio: '麦克风权限未允许' };
+  }
+  if (error?.name === 'NotFoundError' || error?.name === 'DevicesNotFoundError') {
+    return { summary: '没有找到完整的摄像头和麦克风设备，请连接设备后重新检查。', video: '未找到可用摄像头', audio: '未找到可用麦克风' };
+  }
+  if (error?.name === 'NotReadableError' || error?.name === 'TrackStartError') {
+    return { summary: '设备可能正被其他应用占用，请关闭占用摄像头或麦克风的应用后重试。', video: '摄像头可能被占用', audio: '麦克风可能被占用' };
+  }
+  if (error?.name === 'SecurityError' || error?.name === 'TypeError') {
+    return { summary: `当前环境无法访问设备。请使用安全网页或检查应用权限。${permissions}`, video: '当前环境无法访问摄像头', audio: '当前环境无法访问麦克风' };
+  }
+  return { summary: error?.userMessage || '设备检查没有完成，请确认设备未被占用并重新检查。', video: '摄像头检查失败，请重试', audio: '麦克风检查失败，请重试' };
+}
+
+function waitForVideoMetadata(video, timeoutMs = 4000) {
+  if (video.readyState >= 1) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      clearTimeout(timeout);
+      video.removeEventListener('loadedmetadata', handleLoaded);
+      video.removeEventListener('error', handleError);
+    };
+    const handleLoaded = () => { cleanup(); resolve(); };
+    const handleError = () => { cleanup(); reject(new Error('摄像头预览启动失败')); };
+    const timeout = setTimeout(() => {
+      cleanup();
+      const error = new Error('摄像头预览启动超时');
+      error.name = 'VideoPreviewTimeoutError';
+      reject(error);
+    }, timeoutMs);
+    video.addEventListener('loadedmetadata', handleLoaded, { once: true });
+    video.addEventListener('error', handleError, { once: true });
+  });
+}
+
+function stopTracks(mediaStream) {
+  mediaStream?.getTracks?.().forEach((track) => {
+    try { track.stop(); } catch (error) { console.warn('Failed to stop media track', error); }
+  });
+}
+
+function clearDevicePreview() {
+  try { devicePreview.pause(); } catch (error) { console.warn('Failed to pause device preview', error); }
+  devicePreview.srcObject = null;
+  devicePreviewFrame.dataset.state = 'idle';
+  devicePreviewPlaceholder.hidden = false;
+}
+
+function clearInterviewPreview() {
+  try { cameraPreview.pause(); } catch (error) { console.warn('Failed to pause interview preview', error); }
+  cameraPreview.srcObject = null;
+  cameraPreview.closest('.camera-panel').classList.remove('has-camera');
+  cameraFallback.hidden = false;
+  cameraLabel.textContent = '摄像头待连接';
+}
+
+function stopDeviceMeter() {
+  if (deviceVolumeFrame !== null) window.cancelAnimationFrame(deviceVolumeFrame);
+  deviceVolumeFrame = null;
+  try { deviceAudioSource?.disconnect(); } catch (error) { console.warn('Failed to disconnect microphone source', error); }
+  try { deviceAnalyser?.disconnect(); } catch (error) { console.warn('Failed to disconnect microphone analyser', error); }
+  const context = deviceAudioContext;
+  deviceAudioSource = null;
+  deviceAnalyser = null;
+  deviceAudioContext = null;
+  if (context && context.state !== 'closed') context.close().catch(() => undefined);
+  deviceVolumeLevel.style.width = '0%';
+  deviceVolumeMeter.setAttribute('aria-valuenow', '0');
+}
+
+async function startDeviceMeter(mediaStream) {
+  stopDeviceMeter();
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextConstructor) {
+    const error = new Error('当前浏览器不支持麦克风音量检测');
+    error.name = 'AudioContextUnsupportedError';
+    error.userMessage = '当前浏览器无法显示麦克风音量，请更换浏览器后重新检查。';
+    throw error;
+  }
+  const context = new AudioContextConstructor();
+  deviceAudioContext = context;
+  if (context.state === 'suspended' && typeof context.resume === 'function') await context.resume();
+  const source = context.createMediaStreamSource(mediaStream);
+  const analyser = context.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.75;
+  source.connect(analyser);
+  deviceAudioSource = source;
+  deviceAnalyser = analyser;
+  const samples = new Uint8Array(analyser.fftSize);
+
+  const updateVolume = () => {
+    if (deviceAudioContext !== context || deviceAnalyser !== analyser) return;
+    analyser.getByteTimeDomainData(samples);
+    let energy = 0;
+    for (const sample of samples) {
+      const normalized = (sample - 128) / 128;
+      energy += normalized * normalized;
+    }
+    const level = Math.min(100, Math.round(Math.sqrt(energy / samples.length) * 280));
+    deviceVolumeLevel.style.width = `${level}%`;
+    deviceVolumeMeter.setAttribute('aria-valuenow', String(level));
+    deviceVolumeFrame = window.requestAnimationFrame(updateVolume);
+  };
+  updateVolume();
+}
+
+function resetDeviceCheck({ stopStream = true, hideModal = false } = {}) {
+  deviceCheckGeneration += 1;
+  enableMedia.reset();
+  stopDeviceMeter();
+  clearDevicePreview();
+  if (stopStream && stream) stopTracks(stream);
+  if (stopStream) stream = null;
+  deviceCheckState = 'idle';
+  setDeviceRowState('video', 'idle', '等待检查');
+  setDeviceRowState('audio', 'idle', '等待检查');
+  deviceMessage.textContent = '先检查摄像头和麦克风，确认画面与收音都已连接。';
+  enableDeviceButton.textContent = '开始检查';
+  enableDeviceButton.disabled = false;
+  enableDeviceButton.removeAttribute('aria-busy');
+  if (hideModal) deviceModal.hidden = true;
+}
+
+function openDeviceCheck() {
+  resetDeviceCheck();
+  deviceModal.hidden = false;
+  enableDeviceButton.focus();
+}
+
+function closeDeviceCheck() {
+  resetDeviceCheck({ hideModal: true });
+  clearInterviewPreview();
+}
+
+function createTrackFailure(videoStatus, audioStatus, userMessage) {
+  const error = new Error('设备轨道未通过检查');
+  error.name = 'DeviceTrackError';
+  error.deviceStatuses = { video: videoStatus, audio: audioStatus };
+  error.userMessage = userMessage;
+  return error;
+}
+
+function showDeviceFailure(error) {
+  const fallback = getDeviceFailureCopy(error);
+  const statuses = error?.deviceStatuses;
+  const videoMessage = statuses?.video?.ok ? '已检测，但本次检查未完成，请重试' : statuses?.video?.message || fallback.video;
+  const audioMessage = statuses?.audio?.ok ? '已检测，但本次检查未完成，请重试' : statuses?.audio?.message || fallback.audio;
+  deviceCheckState = 'error';
+  devicePreviewFrame.dataset.state = 'error';
+  setDeviceRowState('video', 'error', videoMessage);
+  setDeviceRowState('audio', 'error', audioMessage);
+  deviceMessage.textContent = error?.userMessage || fallback.summary;
+  enableDeviceButton.textContent = '重新检查';
+}
+
+async function runDeviceCheck() {
+  const generation = ++deviceCheckGeneration;
+  stopDeviceMeter();
+  if (stream) stopTracks(stream);
+  stream = null;
+  clearDevicePreview();
+  clearInterviewPreview();
+  deviceCheckState = 'checking';
+  devicePreviewFrame.dataset.state = 'checking';
+  setDeviceRowState('video', 'checking', '正在连接摄像头');
+  setDeviceRowState('audio', 'checking', '正在连接麦克风');
+  deviceMessage.textContent = '正在请求设备权限并启动实时预览…';
+  enableDeviceButton.textContent = '检查中…';
   enableDeviceButton.disabled = true;
   enableDeviceButton.setAttribute('aria-busy', 'true');
+  let candidateStream = null;
+
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    cameraPreview.srcObject = stream;
-    cameraPreview.closest('.camera-panel').classList.add('has-camera');
-    cameraFallback.hidden = true;
-    cameraLabel.textContent = '摄像头与麦克风已连接';
-    deviceModal.hidden = true;
-    beginInterview();
+    candidateStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if (generation !== deviceCheckGeneration || deviceModal.hidden) {
+      stopTracks(candidateStream);
+      return;
+    }
+    stream = candidateStream;
+    const videoStatus = inspectMediaTrack(stream, 'video');
+    const audioStatus = inspectMediaTrack(stream, 'audio');
+    if (!videoStatus.ok || !audioStatus.ok) {
+      throw createTrackFailure(videoStatus, audioStatus, '设备没有完整进入可用状态，请检查连接和系统权限后重试。');
+    }
+
+    devicePreview.srcObject = stream;
+    try {
+      await waitForVideoMetadata(devicePreview);
+      await devicePreview.play();
+      if (devicePreview.videoWidth <= 0 || devicePreview.videoHeight <= 0) {
+        const error = new Error('摄像头预览没有有效画面');
+        error.name = 'VideoPreviewEmptyError';
+        throw error;
+      }
+    } catch (error) {
+      error.deviceStatuses = {
+        video: { ok: false, message: error.name === 'VideoPreviewTimeoutError' ? '摄像头预览启动超时' : '摄像头预览启动失败' },
+        audio: { ok: true, message: audioStatus.message }
+      };
+      error.userMessage = '摄像头轨道已连接，但实时预览没有正常启动。请关闭占用摄像头的应用后重新检查。';
+      throw error;
+    }
+    if (generation !== deviceCheckGeneration || deviceModal.hidden) {
+      stopTracks(candidateStream);
+      clearDevicePreview();
+      return;
+    }
+
+    try {
+      await startDeviceMeter(stream);
+    } catch (error) {
+      error.deviceStatuses = {
+        video: { ok: true, message: videoStatus.message },
+        audio: { ok: false, message: '麦克风音量检测无法启动' }
+      };
+      throw error;
+    }
+    if (generation !== deviceCheckGeneration || deviceModal.hidden) {
+      stopDeviceMeter();
+      stopTracks(candidateStream);
+      clearDevicePreview();
+      return;
+    }
+
+    deviceCheckState = 'ready';
+    devicePreviewFrame.dataset.state = 'ready';
+    devicePreviewPlaceholder.hidden = true;
+    setDeviceRowState('video', 'ready', '已就绪，实时画面正常');
+    setDeviceRowState('audio', 'ready', '已连接，可通过音量条确认收音');
+    deviceMessage.textContent = '设备已经准备好。确认画面与音量变化正常后进入面试。';
+    enableDeviceButton.textContent = '设备正常，进入面试';
   } catch (error) {
-    message.textContent = '没有获得摄像头或麦克风权限。请在浏览器地址栏重新允许后再开始面试。';
+    if (candidateStream) stopTracks(candidateStream);
+    if (stream === candidateStream) stream = null;
+    stopDeviceMeter();
+    clearDevicePreview();
+    if (generation !== deviceCheckGeneration) return;
+    showDeviceFailure(error);
   } finally {
-    enableDeviceButton.disabled = false;
-    enableDeviceButton.removeAttribute('aria-busy');
+    if (generation === deviceCheckGeneration) {
+      enableDeviceButton.disabled = false;
+      enableDeviceButton.removeAttribute('aria-busy');
+    }
   }
+}
+
+function enterInterviewWithCheckedStream() {
+  const videoStatus = inspectMediaTrack(stream, 'video');
+  const audioStatus = inspectMediaTrack(stream, 'audio');
+  if (deviceCheckState !== 'ready' || !videoStatus.ok || !audioStatus.ok) {
+    stopDeviceMeter();
+    stopTracks(stream);
+    stream = null;
+    clearDevicePreview();
+    clearInterviewPreview();
+    showDeviceFailure(createTrackFailure(videoStatus, audioStatus, '设备连接已经失效，请重新检查后再进入面试。'));
+    return;
+  }
+
+  deviceCheckGeneration += 1;
+  stopDeviceMeter();
+  clearDevicePreview();
+  deviceCheckState = 'interview';
+  cameraPreview.srcObject = stream;
+  cameraPreview.closest('.camera-panel').classList.add('has-camera');
+  cameraFallback.hidden = true;
+  cameraLabel.textContent = '摄像头与麦克风已连接';
+  cameraPreview.play().catch(() => undefined);
+  deviceModal.hidden = true;
+  beginInterview();
+}
+
+const enableMedia = createSingleFlight(async () => {
+  if (deviceCheckState === 'ready') {
+    enableDeviceButton.disabled = true;
+    enterInterviewWithCheckedStream();
+    if (!deviceModal.hidden) enableDeviceButton.disabled = false;
+    return;
+  }
+  await runDeviceCheck();
 });
 
 enableDeviceButton.addEventListener('click', enableMedia);
+closeDeviceButton.addEventListener('click', closeDeviceCheck);
+deviceModal.addEventListener('click', (event) => { if (event.target === deviceModal) closeDeviceCheck(); });
 function formatTime(seconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
@@ -305,10 +616,10 @@ async function startRealtimeInterview() {
 
 function stopMedia() {
   clearInterval(timer);
-  if (stream) stream.getTracks().forEach((track) => track.stop());
   realtimeSession?.stop();
   realtimeSession = null;
-  stream = null;
+  resetDeviceCheck({ stopStream: true, hideModal: true });
+  clearInterviewPreview();
 }
 
 function resetReviewLayer() {
@@ -466,16 +777,16 @@ function populateReport(review) {
 retryReviewButton.addEventListener('click', generateReview);
 
 document.querySelector('#return-to-prepare').addEventListener('click', () => {
+  stopMedia();
   generatingLayer.hidden = true;
   isFinishing = false;
-  deviceModal.hidden = true;
   setStage('prepare');
 });
 
 document.querySelector('#restart-interview').addEventListener('click', () => {
-  cameraPreview.srcObject = null;
-  cameraPreview.closest('.camera-panel').classList.remove('has-camera');
-  cameraFallback.hidden = false;
-  deviceModal.hidden = false;
+  stopMedia();
   setStage('prepare');
+  openDeviceCheck();
 });
+
+window.addEventListener('pagehide', stopMedia);

@@ -1,9 +1,9 @@
 const CACHE_PREFIX = 'ai-interview-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v5`;
+const CACHE_NAME = `${CACHE_PREFIX}v7`;
 const APP_SHELL = [
   './app.html',
-  './app.css?v=20260807-5',
-  './app.js?v=20260807-3',
+  './app.css?v=20260807-6',
+  './app.js?v=20260807-5',
   './file-parser.js?v=20260807-1',
   './realtime.js?v=20260807-2',
   './manifest.webmanifest',

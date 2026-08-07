@@ -269,13 +269,90 @@ test('device permission flow is single-flight and disables its trigger while pen
 
   assert.strictEqual(first, second);
   assert.equal(calls, 1);
+  guarded.reset();
+  const replacement = guarded();
+  assert.notStrictEqual(first, replacement);
+  await replacement;
+  assert.equal(calls, 2);
   release('done');
   await first;
   await guarded();
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);
   assert.match(appSource, /const enableMedia = createSingleFlight\(async \(\) =>/);
+  assert.match(appSource, /enableMedia\.reset\(\)/);
   assert.match(appSource, /enableDeviceButton\.disabled = true/);
   assert.match(appSource, /enableDeviceButton\.disabled = false/);
+});
+
+test('device preflight accepts only enabled live video and audio tracks', () => {
+  const declaration = appSource.match(/function inspectMediaTrack\(mediaStream, kind\) \{[\s\S]*?^\}/m)?.[0];
+  assert.ok(declaration, 'inspectMediaTrack should be declared in app.js');
+  const inspectMediaTrack = runInNewContext(`(${declaration})`);
+  const liveVideo = { enabled: true, readyState: 'live' };
+  const liveAudio = { enabled: true, readyState: 'live' };
+  const mediaStream = {
+    getVideoTracks: () => [liveVideo],
+    getAudioTracks: () => [liveAudio]
+  };
+
+  assert.equal(inspectMediaTrack(mediaStream, 'video').ok, true);
+  assert.equal(inspectMediaTrack(mediaStream, 'audio').ok, true);
+  assert.equal(inspectMediaTrack({ getVideoTracks: () => [] }, 'video').ok, false);
+  assert.equal(inspectMediaTrack({ getAudioTracks: () => [{ enabled: false, readyState: 'live' }] }, 'audio').ok, false);
+  assert.equal(inspectMediaTrack({ getVideoTracks: () => [{ enabled: true, readyState: 'ended' }] }, 'video').ok, false);
+  assert.match(appSource, /video\.readyState\s*>=\s*1/);
+  assert.match(appSource, /loadedmetadata/);
+  assert.match(appSource, /setTimeout\([\s\S]*?timeoutMs\)/);
+});
+
+test('device preflight checks first and enters the interview only on the second action', () => {
+  const checkFlow = appSource.match(/async function runDeviceCheck\(\) \{[\s\S]*?^\}/m)?.[0];
+  const enterFlow = appSource.match(/function enterInterviewWithCheckedStream\(\) \{[\s\S]*?^\}/m)?.[0];
+  assert.ok(checkFlow, 'runDeviceCheck should be declared in app.js');
+  assert.ok(enterFlow, 'enterInterviewWithCheckedStream should be declared in app.js');
+
+  assert.match(checkFlow, /getUserMedia\(\{ video: true, audio: true \}\)/);
+  assert.match(checkFlow, /devicePreview\.videoWidth <= 0 \|\| devicePreview\.videoHeight <= 0/);
+  assert.match(checkFlow, /VideoPreviewEmptyError/);
+  assert.match(checkFlow, /deviceCheckState = 'ready'/);
+  assert.match(checkFlow, /设备正常，进入面试/);
+  assert.doesNotMatch(checkFlow, /beginInterview\(/);
+  assert.match(enterFlow, /inspectMediaTrack\(stream, 'video'\)/);
+  assert.match(enterFlow, /inspectMediaTrack\(stream, 'audio'\)/);
+  assert.match(enterFlow, /cameraPreview\.srcObject = stream/);
+  assert.match(enterFlow, /beginInterview\(\)/);
+  assert.equal((appSource.match(/navigator\.mediaDevices\.getUserMedia/g) || []).length, 1);
+  assert.match(appSource, /if \(deviceCheckState === 'ready'\)[\s\S]*?enterInterviewWithCheckedStream\(\)/);
+  assert.match(appSource, /realtimeSession\.start\(stream,/);
+});
+
+test('device failures are itemized, actionable on Android, and release partial media', () => {
+  const declaration = appSource.match(/function getDeviceFailureCopy\(error\) \{[\s\S]*?^\}/m)?.[0];
+  assert.ok(declaration, 'getDeviceFailureCopy should be declared in app.js');
+  const getDeviceFailureCopy = runInNewContext(`(${declaration})`);
+  const denied = getDeviceFailureCopy({ name: 'NotAllowedError' });
+
+  assert.match(denied.summary, /Android 系统.*应用权限/);
+  assert.match(denied.summary, /浏览器.*网站权限/);
+  assert.match(denied.video, /摄像头/);
+  assert.match(denied.audio, /麦克风/);
+  assert.match(appSource, /if \(candidateStream\) stopTracks\(candidateStream\)/);
+  assert.match(appSource, /stopDeviceMeter\(\);[\s\S]*?clearDevicePreview\(\);[\s\S]*?showDeviceFailure\(error\)/);
+  assert.match(appSource, /enableDeviceButton\.textContent = '重新检查'/);
+});
+
+test('device preview meter and reset paths close every temporary resource', () => {
+  assert.match(appSource, /createMediaStreamSource\(mediaStream\)/);
+  assert.match(appSource, /createAnalyser\(\)/);
+  assert.match(appSource, /getByteTimeDomainData\(samples\)/);
+  assert.match(appSource, /window\.requestAnimationFrame\(updateVolume\)/);
+  assert.match(appSource, /window\.cancelAnimationFrame\(deviceVolumeFrame\)/);
+  assert.match(appSource, /context\.close\(\)\.catch/);
+  assert.match(appSource, /devicePreview\.srcObject = null/);
+  assert.match(appSource, /cameraPreview\.srcObject = null/);
+  assert.match(appSource, /function stopMedia\(\) \{[\s\S]*?resetDeviceCheck\(\{ stopStream: true, hideModal: true \}\);[\s\S]*?clearInterviewPreview\(\);/);
+  assert.match(appSource, /async function parseSelectedFile[\s\S]*?resetDeviceCheck\(\{ hideModal: true \}\)/);
+  assert.match(appSource, /#restart-interview'[\s\S]*?stopMedia\(\);[\s\S]*?openDeviceCheck\(\)/);
 });
 
 function createRealtimeErrorHarness({ transcript = [], latestText = '' } = {}) {

@@ -95,9 +95,9 @@ test('PWA shell integrates the current local material parser', () => {
   assert.doesNotMatch(html, /id="resume-input"[^>]+accept="[^"]*\.doc(?:,|\")/);
   assert.match(html, /id="jd-input"[^>]+accept="\.pdf,\.docx,\.txt"/);
   assert.doesNotMatch(html, /id="jd-input"[^>]+accept="[^"]*\.doc(?:,|\")/);
-  assert.match(html, /app\.js\?v=20260807-3/);
+  assert.match(html, /app\.js\?v=20260807-5/);
   assert.match(html, /realtime\.js\?v=20260807-2/);
-  assert.match(html, /app\.css\?v=20260807-5/);
+  assert.match(html, /app\.css\?v=20260807-6/);
   assert.match(html, /class="ai-interviewer-label"[\s\S]*?class="coach-interviewer-image"[\s\S]*?design-assets\/characters\/yellow-coach-cutout-v1\.png/);
   assert.doesNotMatch(html, /design-assets\/app-icons\/ai-interviewer-image2-v1\.png/);
   assert.match(html, /id="device-modal"[\s\S]*design-assets\/characters\/yellow-coach-cutout-v1\.png/);
@@ -108,13 +108,29 @@ test('PWA shell integrates the current local material parser', () => {
   assert.match(css, /\.modal-mark\.device\s*\{\s*width:\s*132px;\s*height:\s*84px;/);
 
   const worker = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
-  assert.match(worker, /CACHE_PREFIX\}v5/);
-  assert.match(worker, /['"]\.\/app\.css\?v=20260807-5['"]/);
-  assert.match(worker, /['"]\.\/app\.js\?v=20260807-3['"]/);
+  assert.match(worker, /CACHE_PREFIX\}v7/);
+  assert.match(worker, /['"]\.\/app\.css\?v=20260807-6['"]/);
+  assert.match(worker, /['"]\.\/app\.js\?v=20260807-5['"]/);
   assert.match(worker, /['"]\.\/file-parser\.js\?v=20260807-1['"]/);
   assert.match(worker, /['"]\.\/realtime\.js\?v=20260807-2['"]/);
   assert.match(worker, /['"]\.\/design-assets\/characters\/yellow-coach-cutout-v1\.png['"]/);
   assert.doesNotMatch(worker, /design-assets\/app-icons\/ai-interviewer-image2-v1\.png/);
+});
+
+test('device preflight renders a real preview, itemized statuses, and microphone level', () => {
+  assert.match(html, /id="device-camera-preview"[^>]+autoplay[^>]+muted[^>]+playsinline/);
+  assert.match(html, /id="device-camera-row"[^>]+data-state="idle"/);
+  assert.match(html, /id="device-microphone-row"[^>]+data-state="idle"/);
+  assert.match(html, /id="device-camera-status">等待检查/);
+  assert.match(html, /id="device-microphone-status">等待检查/);
+  assert.match(html, /id="device-volume-meter"[^>]+role="progressbar"/);
+  assert.match(html, /id="enable-device">开始检查/);
+  assert.match(html, /id="close-device-modal"[^>]+aria-label="关闭设备检查"/);
+
+  assert.match(css, /\.device-modal > \.device-check-layout\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1\.45fr\) minmax\(300px, 0\.85fr\)/);
+  assert.match(css, /\.device-preview-frame video\s*\{[\s\S]*?object-fit:\s*cover/);
+  assert.match(css, /\.device-check-panel \.device-actions\s*\{[\s\S]*?position:\s*sticky/);
+  assert.match(css, /@media\s*\(max-width:\s*560px\)[\s\S]*?\.device-modal > \.device-check-layout\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/);
 });
 
 test('versioned static assets cannot resolve to an older queryless cache entry', () => {

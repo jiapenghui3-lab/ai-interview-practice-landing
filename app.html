@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="design-assets/pwa/apple-touch-icon-180.png" />
   <link rel="icon" type="image/png" href="design-assets/app-icons/brand-eye-image2-v1.png" />
-  <link rel="stylesheet" href="app.css?v=20260807-5" />
+  <link rel="stylesheet" href="app.css?v=20260807-6" />
 </head>
 <body>
   <main class="app-shell" data-stage="home">
@@ -131,8 +131,33 @@
 
     <div class="modal-backdrop" id="device-modal" hidden>
       <section class="app-modal device-modal" role="dialog" aria-modal="true" aria-labelledby="device-modal-title">
-        <div class="modal-mark device"><img src="design-assets/characters/yellow-coach-cutout-v1.png" alt="" /></div><p>进入面试前</p><h2 id="device-modal-title">确认摄像头和麦克风</h2><span id="device-message">允许浏览器使用设备后，就可以像正式面试一样开始。</span>
-        <div class="device-actions"><button type="button" class="modal-primary" id="enable-device">检查并开始</button></div>
+        <button class="device-close" id="close-device-modal" type="button" aria-label="关闭设备检查" title="关闭设备检查">×</button>
+        <div class="device-modal-kicker"><img src="design-assets/characters/yellow-coach-cutout-v1.png" alt="" /><span>进入面试前 · 设备检查</span></div>
+        <div class="device-check-layout">
+          <div class="device-preview-frame" id="device-preview-frame" data-state="idle">
+            <video id="device-camera-preview" autoplay muted playsinline></video>
+            <div class="device-preview-placeholder" id="device-preview-placeholder"><b>摄像头预览</b><span>点击开始检查后显示实时画面</span></div>
+            <span class="device-preview-live" aria-hidden="true">实时预览</span>
+          </div>
+          <div class="device-check-panel">
+            <header class="device-check-copy">
+              <h2 id="device-modal-title">确认设备正常，再开始</h2>
+              <p id="device-message" aria-live="polite">先检查摄像头和麦克风，确认画面与收音都已连接。</p>
+            </header>
+            <div class="device-check-list" aria-label="设备检查状态">
+              <div class="device-check-row" id="device-camera-row" data-state="idle">
+                <span class="device-check-dot" aria-hidden="true"></span>
+                <span><b>摄像头</b><small id="device-camera-status">等待检查</small></span>
+              </div>
+              <div class="device-check-row microphone" id="device-microphone-row" data-state="idle">
+                <span class="device-check-dot" aria-hidden="true"></span>
+                <span><b>麦克风</b><small id="device-microphone-status">等待检查</small></span>
+                <div class="device-volume-meter" id="device-volume-meter" aria-label="麦克风实时音量" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="device-volume-level"></i></div>
+              </div>
+            </div>
+            <div class="device-actions"><button type="button" class="modal-primary" id="enable-device">开始检查</button></div>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -147,7 +172,7 @@
     </div>
   </main>
   <script src="realtime.js?v=20260807-2"></script>
-  <script src="app.js?v=20260807-3"></script>
+  <script src="app.js?v=20260807-5"></script>
   <script>
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       window.addEventListener('load', () => {
