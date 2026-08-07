@@ -1,8 +1,8 @@
 const CACHE_PREFIX = 'ai-interview-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const CACHE_NAME = `${CACHE_PREFIX}v4`;
 const APP_SHELL = [
   './app.html',
-  './app.css?v=20260807-3',
+  './app.css?v=20260807-4',
   './app.js?v=20260807-3',
   './file-parser.js?v=20260807-1',
   './realtime.js?v=20260807-2',
@@ -21,7 +21,8 @@ const APP_SHELL = [
   './design-assets/app-environments/interview-environment-v1.png',
   './design-assets/app-environments/report-environment-v1.png',
   './design-assets/app-ui/interview-camera-placeholder-v1.png',
-  './design-assets/characters/yellow-coach-action-v1.png'
+  './design-assets/characters/yellow-coach-action-v1.png',
+  './design-assets/characters/yellow-coach-cutout-v1.png'
 ];
 
 self.addEventListener('install', (event) => {

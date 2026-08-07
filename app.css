@@ -1074,10 +1074,16 @@ a {
 }
 
 .modal-mark,
-.modal-mark.device {
+.modal-mark {
   width: 72px;
   height: 72px;
   margin: 0 auto 18px;
+}
+
+.modal-mark.device {
+  width: 148px;
+  height: 95px;
+  margin: 0 auto 14px;
 }
 
 .modal-mark img {
@@ -1703,10 +1709,16 @@ a {
   }
 
   .modal-mark,
-  .modal-mark.device {
+  .modal-mark {
     width: 62px;
     height: 62px;
     margin-bottom: 14px;
+  }
+
+  .modal-mark.device {
+    width: 132px;
+    height: 84px;
+    margin-bottom: 12px;
   }
 
   .app-modal h2 {
