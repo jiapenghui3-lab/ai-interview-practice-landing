@@ -1960,13 +1960,13 @@ a {
   }
 
   .modal-backdrop {
-    padding: max(16px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    padding: max(16px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(52px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
     place-items: end center;
   }
 
   .app-modal {
     width: 100%;
-    max-height: calc(100dvh - max(32px, env(safe-area-inset-top)) - max(28px, env(safe-area-inset-bottom)));
+    max-height: calc(100dvh - max(32px, env(safe-area-inset-top)) - max(64px, env(safe-area-inset-bottom)));
     padding: 24px 20px;
     overflow-y: auto;
     overscroll-behavior: contain;

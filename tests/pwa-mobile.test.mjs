@@ -97,7 +97,7 @@ test('PWA shell integrates the current local material parser', () => {
   assert.doesNotMatch(html, /id="jd-input"[^>]+accept="[^"]*\.doc(?:,|\")/);
   assert.match(html, /app\.js\?v=20260807-5/);
   assert.match(html, /realtime\.js\?v=20260807-2/);
-  assert.match(html, /app\.css\?v=20260807-6/);
+  assert.match(html, /app\.css\?v=20260807-7/);
   assert.match(html, /class="ai-interviewer-label"[\s\S]*?class="coach-interviewer-image"[\s\S]*?design-assets\/characters\/yellow-coach-cutout-v1\.png/);
   assert.doesNotMatch(html, /design-assets\/app-icons\/ai-interviewer-image2-v1\.png/);
   assert.match(html, /id="device-modal"[\s\S]*design-assets\/characters\/yellow-coach-cutout-v1\.png/);
@@ -108,8 +108,8 @@ test('PWA shell integrates the current local material parser', () => {
   assert.match(css, /\.modal-mark\.device\s*\{\s*width:\s*132px;\s*height:\s*84px;/);
 
   const worker = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
-  assert.match(worker, /CACHE_PREFIX\}v7/);
-  assert.match(worker, /['"]\.\/app\.css\?v=20260807-6['"]/);
+  assert.match(worker, /CACHE_PREFIX\}v8/);
+  assert.match(worker, /['"]\.\/app\.css\?v=20260807-7['"]/);
   assert.match(worker, /['"]\.\/app\.js\?v=20260807-5['"]/);
   assert.match(worker, /['"]\.\/file-parser\.js\?v=20260807-1['"]/);
   assert.match(worker, /['"]\.\/realtime\.js\?v=20260807-2['"]/);
@@ -131,6 +131,8 @@ test('device preflight renders a real preview, itemized statuses, and microphone
   assert.match(css, /\.device-preview-frame video\s*\{[\s\S]*?object-fit:\s*cover/);
   assert.match(css, /\.device-check-panel \.device-actions\s*\{[\s\S]*?position:\s*sticky/);
   assert.match(css, /@media\s*\(max-width:\s*560px\)[\s\S]*?\.device-modal > \.device-check-layout\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.match(css, /max\(52px, env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /max\(64px, env\(safe-area-inset-bottom\)\)/);
 });
 
 test('versioned static assets cannot resolve to an older queryless cache entry', () => {
