@@ -1,8 +1,8 @@
 const CACHE_PREFIX = 'ai-interview-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v4`;
+const CACHE_NAME = `${CACHE_PREFIX}v5`;
 const APP_SHELL = [
   './app.html',
-  './app.css?v=20260807-4',
+  './app.css?v=20260807-5',
   './app.js?v=20260807-3',
   './file-parser.js?v=20260807-1',
   './realtime.js?v=20260807-2',
@@ -14,7 +14,6 @@ const APP_SHELL = [
   './design-assets/app-icons/brand-eye-image2-v1.png',
   './design-assets/app-icons/resume-image2-v1.png',
   './design-assets/app-icons/jd-image2-v1.png',
-  './design-assets/app-icons/ai-interviewer-image2-v1.png',
   './design-assets/app-icons/warning-image2-v1.png',
   './design-assets/app-icons/waveform-image2-v1.png',
   './design-assets/app-environments/preparation-environment-v1.png',

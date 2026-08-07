@@ -651,6 +651,11 @@ a {
   object-fit: contain;
 }
 
+.ai-interviewer-label .coach-interviewer-image {
+  transform: scale(2);
+  transform-origin: center;
+}
+
 .ai-interviewer-label b {
   font-size: 20px;
 }

@@ -97,20 +97,24 @@ test('PWA shell integrates the current local material parser', () => {
   assert.doesNotMatch(html, /id="jd-input"[^>]+accept="[^"]*\.doc(?:,|\")/);
   assert.match(html, /app\.js\?v=20260807-3/);
   assert.match(html, /realtime\.js\?v=20260807-2/);
-  assert.match(html, /app\.css\?v=20260807-4/);
+  assert.match(html, /app\.css\?v=20260807-5/);
+  assert.match(html, /class="ai-interviewer-label"[\s\S]*?class="coach-interviewer-image"[\s\S]*?design-assets\/characters\/yellow-coach-cutout-v1\.png/);
+  assert.doesNotMatch(html, /design-assets\/app-icons\/ai-interviewer-image2-v1\.png/);
   assert.match(html, /id="device-modal"[\s\S]*design-assets\/characters\/yellow-coach-cutout-v1\.png/);
   assert.doesNotMatch(html, /id="device-modal"[\s\S]*design-assets\/app-icons\/ai-interviewer-image2-v1\.png/);
 
+  assert.match(css, /\.ai-interviewer-label \.coach-interviewer-image\s*\{[\s\S]*?transform:\s*scale\(2\);/);
   assert.match(css, /\.modal-mark\.device\s*\{\s*width:\s*148px;\s*height:\s*95px;/);
   assert.match(css, /\.modal-mark\.device\s*\{\s*width:\s*132px;\s*height:\s*84px;/);
 
   const worker = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
-  assert.match(worker, /CACHE_PREFIX\}v4/);
-  assert.match(worker, /['"]\.\/app\.css\?v=20260807-4['"]/);
+  assert.match(worker, /CACHE_PREFIX\}v5/);
+  assert.match(worker, /['"]\.\/app\.css\?v=20260807-5['"]/);
   assert.match(worker, /['"]\.\/app\.js\?v=20260807-3['"]/);
   assert.match(worker, /['"]\.\/file-parser\.js\?v=20260807-1['"]/);
   assert.match(worker, /['"]\.\/realtime\.js\?v=20260807-2['"]/);
   assert.match(worker, /['"]\.\/design-assets\/characters\/yellow-coach-cutout-v1\.png['"]/);
+  assert.doesNotMatch(worker, /design-assets\/app-icons\/ai-interviewer-image2-v1\.png/);
 });
 
 test('versioned static assets cannot resolve to an older queryless cache entry', () => {
